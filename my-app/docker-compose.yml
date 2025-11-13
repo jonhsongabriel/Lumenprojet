@@ -1,0 +1,32 @@
+services:
+  node-api:
+    build: ./node
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./node:/app
+    networks:
+      - app-network
+
+  fastapi-api:
+    build: ./fastapi
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./fastapi:/app
+    networks:
+      - app-network
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - node-api
+      - fastapi-api
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
