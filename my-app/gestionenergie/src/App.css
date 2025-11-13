@@ -1,0 +1,7 @@
+.navbar-nav .nav-link,
+.navbar-nav .nav-item .dropdown-toggle {
+  display: flex;
+  align-items: center;
+  line-height: 1.2;
+  height: 100%;
+}
