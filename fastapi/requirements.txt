@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+pymodbus      # si vous utilisez Modbus
+requests      # si vous utilisez API HTTP
