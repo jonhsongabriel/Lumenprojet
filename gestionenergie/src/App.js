@@ -22,6 +22,7 @@ import Journal from "./pages/Journal";
 import Plan from "./pages/Plan";
 import Rapport from "./pages/Rapport";
 
+import "leaflet/dist/leaflet.css";
 
 
 function App() {
