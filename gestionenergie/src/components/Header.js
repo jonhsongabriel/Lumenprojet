@@ -58,25 +58,13 @@ function Header() {
             </Nav.Link>
 
             {/* Moniteur */}
-            <NavDropdown
-              title={
-                <span className="d-flex align-items-center text-light">
-                  <GraphUp size={16} className="me-1" /> Moniteur
-                </span>
-              }
-              id="nav-monitor"
-              menuVariant="dark"
-              className="mx-2 d-flex align-items-center"
-              show={openMonitor}
-              onMouseEnter={() => setOpenMonitor(true)}
-              onMouseLeave={() => setOpenMonitor(false)}
-              drop="down-centered"
-            >
-              <NavDropdown.Item as={Link} to="/monitor/centrale">Centrale</NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/monitor/appareil">Appareil</NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/monitor/alertes">Alertes</NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/monitor/rapport">Rapport et comparaison</NavDropdown.Item>
-            </NavDropdown>
+            <Nav.Link
+                as={Link}
+                to="/monitor"
+                className="text-light fw-semibold d-flex align-items-center mx-2"
+              >
+                  <GraphUp size={16} className="me-1" /><span>Moniteur</span> 
+            </Nav.Link>
 
             {/* Analyse */}
             <NavDropdown

@@ -1,5 +1,104 @@
-function Monitor() {
-  return <h1>Les moniteurs  </h1>;
+import React, { useState, useEffect } from "react";
+
+// Onglets projet
+function Tabs({ activeTab, setActiveTab, projet }) {
+  return (
+    <div style={{ marginTop: "20px" }}>
+      <div style={{ display: "flex", gap: "10px" }}>
+        {["Centrale", "Appareils", "Alertes"].map((tab) => (
+          <button
+            key={tab}
+            style={{
+              padding: "10px 20px",
+              cursor: "pointer",
+              backgroundColor: activeTab === tab ? "#007bff" : "#eee",
+              color: activeTab === tab ? "#fff" : "#000",
+              border: "none",
+              borderRadius: "5px",
+            }}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ marginTop: "20px" }}>
+        {activeTab === "Centrale" && (
+          <div>
+            <h3>{projet.nom}</h3>
+            <p>{projet.description}</p>
+            <p><strong>Centrale :</strong> {projet.centrale}</p>
+          </div>
+        )}
+
+        {activeTab === "Appareils" && (
+          <div>
+            <p><strong>Onduleur :</strong> {projet.onduleur || "Non renseigné"}</p>
+            <p><strong>Batterie :</strong> {projet.batterie || "Non renseigné"}</p>
+            <p><strong>Datalog :</strong> {projet.datalog || "Non renseigné"}</p>
+          </div>
+        )}
+
+        {activeTab === "Alertes" && (
+          <div>
+            <p>Pas d'alertes pour l'instant.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-export default Monitor;
+export default function Monitor() {
+  const [projets, setProjets] = useState([]);
+  const [activeProjet, setActiveProjet] = useState(null);
+  const [activeTab, setActiveTab] = useState("Centrale");
+
+  // Charger les projets depuis le backend
+  useEffect(() => {
+    fetch("http://localhost:5000/api/projets")
+      .then(res => res.json())
+      .then(data => setProjets(data))
+      .catch(err => console.error(err));
+  }, []);
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>Dashboard - Projets Lumen</h1>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginBottom: "30px" }}>
+        {projets.map((projet, idx) => (
+          <div
+            key={idx}
+            style={{
+              width: "200px",
+              cursor: "pointer",
+              border: "1px solid #ccc",
+              borderRadius: "10px",
+              padding: "10px",
+            }}
+            onClick={() => {
+              setActiveProjet(projet);
+              setActiveTab("Centrale");
+            }}
+          >
+            {projet.image && (
+              <img
+                src={`http://localhost:5000${projet.image}`}
+                alt={projet.nom}
+                style={{ width: "100%", height: "120px", objectFit: "cover", borderRadius: "5px" }}
+              />
+            )}
+            <h4>{projet.nom}</h4>
+            <p>{projet.description.slice(0, 50)}...</p>
+          </div>
+        ))}
+      </div>
+
+      {activeProjet && (
+        <Tabs projet={activeProjet} activeTab={activeTab} setActiveTab={setActiveTab} />
+      )}
+    </div>
+  );
+}

@@ -21,7 +21,7 @@ import Direction from "./pages/Direction";
 import Journal from "./pages/Journal";
 import Plan from "./pages/Plan";
 import Rapport from "./pages/Rapport";
-
+import AjouterProjet from "./pages/AjouterProjet";
 import "leaflet/dist/leaflet.css";
 
 
@@ -62,7 +62,8 @@ function App() {
               <Route path="/monitor/rapport" element={<Rapport/>} />
               <Route path="/monitor/centrale" element={<Centrale/>} />
               <Route path="/monitor/appareil" element={<Appareils/>} />
-              
+              <Route path="/ajouterprojet" element={<AjouterProjet/>} />
+              <Route path="*" element={<Dashboard />} />
             </Routes>
           </main>
         </div>

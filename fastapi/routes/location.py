@@ -28,6 +28,7 @@ def init_db():
 
 init_db()
 
+#Insertion des coordonné vien du google
 @router.post("/location")
 def save_location(data: Location):
     conn = sqlite3.connect("lumen.db")
@@ -39,7 +40,9 @@ def save_location(data: Location):
     conn.commit()
     conn.close()
     return {"message": "Coordonnées enregistrées avec succès"}
+   
 
+#Enregistrement du coordonnée vien du google 
 @router.get("/sites")
 def get_sites():
     conn = sqlite3.connect("lumen.db")
@@ -48,3 +51,6 @@ def get_sites():
     rows = cursor.fetchall()
     conn.close()
     return [{"nom": row[0], "latitude": row[1], "longitude": row[2]} for row in rows]
+
+
+

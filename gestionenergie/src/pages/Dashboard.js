@@ -1,51 +1,34 @@
-import React, { useState, useEffect } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function Dashboard() {
-  const [donnees, setDonnees] = useState({ tension: 0, courant: 0 });
-  const [historique, setHistorique] = useState([]);
+export default function Dashboard() {
+  const [projets, setProjets] = useState([]);
+  const navigate = useNavigate();
 
-  // Récupérer la dernière mesure toutes les secondes
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetch("http://localhost:8000/donnees-solaire")
-        .then(res => res.json())
-        .then(data => {
-          setDonnees(data);
-          setHistorique(prev => [{ ...data, timestamp: new Date().toLocaleTimeString() }, ...prev].slice(0, 20));
-        })
-        .catch(err => console.error(err));
-    }, 1000);
-
-    return () => clearInterval(interval);
+    fetch("http://localhost:5000/api/projets")
+      .then(res => res.json())
+      .then(data => setProjets(data))
+      .catch(err => console.error(err));
   }, []);
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h2>Dashboard Panneau Solaire</h2>
-
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Données en temps réel</h3>
-        <p><strong>Tension :</strong> {donnees.tension} V</p>
-        <p><strong>Courant :</strong> {donnees.courant} A</p>
+    <div style={{ padding: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <h1>Dashboard - Projets</h1>
+        <button onClick={() => navigate("/ajouterprojet")}>Ajouter un projet</button>
       </div>
 
-      <div style={{ width: "100%", height: 400 }}>
-        <h3>Graphique en temps réel</h3>
-        <ResponsiveContainer>
-          <LineChart data={historique.reverse()}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-            <Line type="monotone" dataKey="tension" stroke="#8884d8" name="Tension (V)" />
-            <Line type="monotone" dataKey="courant" stroke="#82ca9d" name="Courant (A)" />
-          </LineChart>
-        </ResponsiveContainer>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginTop: "20px" }}>
+        {projets.length === 0 && <p>Aucun projet pour le moment</p>}
+        {projets.map((projet, idx) => (
+          <div key={idx} style={{ width: "200px", border: "1px solid #ccc", borderRadius: "10px", padding: "10px" }}>
+            {projet.image && <img src={`http://localhost:5000${projet.image}`} alt={projet.nom} style={{ width: "100%", height: "120px", objectFit: "cover", borderRadius: "5px" }} />}
+            <h4>{projet.nom}</h4>
+            <p>{projet.description.slice(0, 50)}...</p>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
-
-export default Dashboard;
