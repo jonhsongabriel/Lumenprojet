@@ -1,3 +1,4 @@
+// server.js
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
@@ -16,16 +17,14 @@ app.use(express.json());
 
 // --- Servir le frontend React ---
 app.use(express.static(path.join(__dirname, "../gestionenergie/build")));
-
-// --- Servir les images projets depuis le frontend public/images ---
 app.use("/images", express.static(path.join(__dirname, "../gestionenergie/public/images")));
 
 // --- Config Multer pour upload image ---
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "../gestionenergie/public/images")); // dossier cible correct
+  destination: (req, file, cb) => {
+    cb(null, path.join(__dirname, "../gestionenergie/public/images"));
   },
-  filename: function (req, file, cb) {
+  filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + path.extname(file.originalname));
   },
@@ -41,7 +40,6 @@ app.get("/api/administrateurs", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 app.post("/api/administrateurs", async (req, res) => {
   const { nom, email, role, motdepasse } = req.body;
   if (!nom || !email || !role || !motdepasse) return res.status(400).json({ message: "Tous les champs sont obligatoires." });
@@ -53,7 +51,6 @@ app.post("/api/administrateurs", async (req, res) => {
     res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 });
-
 app.put("/api/administrateurs/:id", async (req, res) => {
   const { id } = req.params;
   const { nom, email, role } = req.body;
@@ -68,7 +65,6 @@ app.put("/api/administrateurs/:id", async (req, res) => {
     res.status(500).json({ message: "Erreur serveur" });
   }
 });
-
 app.delete("/api/administrateurs/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -91,7 +87,6 @@ app.get("/api/client", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 app.post("/api/client", async (req, res) => {
   const { nomclient, prenomclient, adresseclient, contactclient, emailclient } = req.body;
   if (!nomclient || !prenomclient || !adresseclient || !contactclient || !emailclient) return res.status(400).json({ message: "Tous les champs sont obligatoires." });
@@ -103,7 +98,6 @@ app.post("/api/client", async (req, res) => {
     res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 });
-
 app.put("/api/client/:id", async (req, res) => {
   const { id } = req.params;
   const { nomclient, prenomclient, adresseclient, contactclient, emailclient } = req.body;
@@ -118,7 +112,6 @@ app.put("/api/client/:id", async (req, res) => {
     res.status(500).json({ message: "Erreur serveur" });
   }
 });
-
 app.delete("/api/client/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -132,32 +125,48 @@ app.delete("/api/client/:id", async (req, res) => {
   }
 });
 
-// --- Routes Demandes ---
+// --- Routes DEMANDES (corrigé) ---
 app.get("/api/demande", async (req, res) => {
   try {
-    const demandes = await Demande.findAll();
+    const demandes = await Demande.findAll({ order: [["tempdemader", "DESC"]] });
     res.json(demandes);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Erreur fetch demandes :", err);
+    res.status(500).json({ message: "Erreur serveur", details: err.message });
   }
 });
 
 app.post("/api/demande", async (req, res) => {
   const { nomdemader, emaildemander, messagedemander, tempdemader } = req.body;
-  if (!nomdemader || !emaildemander || !messagedemander || !tempdemader) return res.status(400).json({ message: "Tous les champs sont obligatoires." });
+
+  if (!nomdemader || !emaildemander || !messagedemander || !tempdemader) {
+    return res.status(400).json({ message: "Tous les champs sont obligatoires." });
+  }
+
   try {
     const dateValid = new Date(tempdemader);
-    if (isNaN(dateValid)) return res.status(400).json({ message: "Format de date invalide." });
+    if (isNaN(dateValid)) {
+      return res.status(400).json({ message: "Format de date invalide." });
+    }
 
-    const newDemande = await Demande.create({ nomdemader, emaildemander, messagedemander, tempdemader: dateValid });
+    console.log("Création demande avec :", { nomdemader, emaildemander, messagedemander, tempdemader: dateValid });
+
+    const newDemande = await Demande.create({
+      nomdemader,
+      emaildemander,
+      messagedemander,
+      tempdemader: dateValid,
+    });
+
     res.status(201).json(newDemande);
   } catch (err) {
     console.error("Erreur ajout demande :", err);
-    res.status(500).json({ message: "Erreur serveur", error: err.message });
+    res.status(500).json({ message: "Erreur serveur", details: err.message });
   }
 });
 
-// --- Routes Projets (upload image) ---
+
+// --- Routes PROJETS (upload image) ---
 if (!global.projets) global.projets = [];
 
 app.post("/api/projets", upload.single("image"), async (req, res) => {
@@ -189,16 +198,19 @@ app.get("/api/projets", (req, res) => {
 
 // --- Initialisation base + serveur ---
 sequelize.sync().then(async () => {
-  console.log("Modèles synchronisés avec la base !");
+  console.log("✅ Modèles synchronisés avec la base !");
 
+  // Admin par défaut
   const adminExist = await Administrateur.findOne({ where: { email: "admin@lumen.com" } });
   if (!adminExist) await Administrateur.create({ nom: "Administrateur Principal", email: "admin@lumen.com", motdepasse: "123456", role: "SuperAdmin" });
 
+  // Client par défaut
   const clientExist = await Client.findOne({ where: { emailclient: "admin@lumen.com" } });
   if (!clientExist) await Client.create({ nomclient: "Administrateur", prenomclient: "Principal", adresseclient: "Mahajanga", contactclient: "0340000000", emailclient: "admin@lumen.com" });
 
+  // Demande par défaut
   const demandeExist = await Demande.findOne({ where: { emaildemander: "admin@lumen.com" } });
-  if (!demandeExist) await Demande.create({ nomdemader: "Administrateur", emaildemander: "admin@lumen.com", messagedemander: "Bonjour", tempdemader: new Date("2026-12-10T00:00:00") });
+  if (!demandeExist) await Demande.create({ nomdemader: "Administrateur", emaildemander: "admin@lumen.com", messagedemander: "Bonjour", tempdemader: new Date() });
 
   app.listen(PORT, () => console.log(`✅ Serveur backend démarré sur http://localhost:${PORT}`));
 }).catch(err => console.error(err));

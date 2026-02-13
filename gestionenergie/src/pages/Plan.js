@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { GoogleMap, LoadScript, Marker, StandaloneSearchBox } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  Marker,
+  StandaloneSearchBox,
+  useJsApiLoader
+} from "@react-google-maps/api";
 import axios from "axios";
 
 const containerStyle = {
@@ -8,17 +13,21 @@ const containerStyle = {
 };
 
 const center = {
-  lat: -18.8792, // Madagascar
+  lat: -18.8792,
   lng: 47.5079,
 };
 
 function Plan() {
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: "TA_CLE_API",
+    libraries: ["places"],
+  });
+
   const [position, setPosition] = useState(null);
   const [nom, setNom] = useState("");
   const [sites, setSites] = useState([]);
   const [searchBox, setSearchBox] = useState(null);
 
-  // Charger tous les sites existants
   const loadSites = async () => {
     try {
       const res = await axios.get("http://localhost:8000/sites");
@@ -44,29 +53,37 @@ function Plan() {
       alert("Veuillez sélectionner un endroit et un nom");
       return;
     }
+
     try {
       await axios.post("http://localhost:8000/location", {
-        nom: nom,
+        nom,
         latitude: position.lat,
         longitude: position.lng,
       });
-      alert("Coordonnées enregistrées avec succès !");
+
+      alert("Coordonnées enregistrées !");
       setNom("");
       setPosition(null);
-      loadSites(); // Recharge la liste des sites
+      loadSites();
     } catch (err) {
-      alert("Erreur lors de l'enregistrement");
       console.error(err);
     }
   };
 
   const onLoadSearchBox = (ref) => setSearchBox(ref);
+
   const onPlacesChanged = () => {
     const places = searchBox.getPlaces();
-    if (places.length === 0) return;
+    if (!places || places.length === 0) return;
+
     const place = places[0].geometry.location;
-    setPosition({ lat: place.lat(), lng: place.lng() });
+    setPosition({
+      lat: place.lat(),
+      lng: place.lng(),
+    });
   };
+
+  if (!isLoaded) return <div>Chargement carte...</div>;
 
   return (
     <div className="container mt-3">
@@ -80,38 +97,36 @@ function Plan() {
         onChange={(e) => setNom(e.target.value)}
       />
 
-      <LoadScript googleMapsApiKey="AIzaSyAs3hRlBomEBAsGtz9T3j_5LpV902cryjY" libraries={["places"]}>
-        <StandaloneSearchBox
-          onLoad={onLoadSearchBox}
-          onPlacesChanged={onPlacesChanged}
-        >
-          <input
-            type="text"
-            placeholder="Chercher une adresse ou un immeuble"
-            className="form-control mb-2"
-            style={{ width: "100%" }}
+      <StandaloneSearchBox
+        onLoad={onLoadSearchBox}
+        onPlacesChanged={onPlacesChanged}
+      >
+        <input
+          type="text"
+          placeholder="Chercher une adresse"
+          className="form-control mb-2"
+        />
+      </StandaloneSearchBox>
+
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={13}
+        onClick={handleClick}
+      >
+        {position && <Marker position={position} />}
+
+        {sites.map((site, index) => (
+          <Marker
+            key={index}
+            position={{
+              lat: Number(site.latitude),
+              lng: Number(site.longitude),
+            }}
+            title={site.nom}
           />
-        </StandaloneSearchBox>
-
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={center}
-          zoom={13}
-          onClick={handleClick}
-        >
-          {/* Marqueur pour le clic */}
-          {position && <Marker position={position} />}
-
-          {/* Marqueurs pour tous les sites */}
-          {sites.map((site, index) => (
-            <Marker
-              key={index}
-              position={{ lat: site.latitude, lng: site.longitude }}
-              title={site.nom}
-            />
-          ))}
-        </GoogleMap>
-      </LoadScript>
+        ))}
+      </GoogleMap>
 
       {position && (
         <div className="mt-3">

@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from "recharts";
 
 // Onglets projet
-function Tabs({ activeTab, setActiveTab, projet }) {
+function Tabs({ activeTab, setActiveTab, projet, donnees, historique }) {
   return (
     <div style={{ marginTop: "20px" }}>
       <div style={{ display: "flex", gap: "10px" }}>
@@ -28,21 +31,55 @@ function Tabs({ activeTab, setActiveTab, projet }) {
           <div>
             <h3>{projet.nom}</h3>
             <p>{projet.description}</p>
-            <p><strong>Centrale :</strong> {projet.centrale}</p>
+            {donnees.centrale && (
+              <div>
+                <p><strong>Tension :</strong> {donnees.centrale.tension} V</p>
+                <p><strong>Courant :</strong> {donnees.centrale.courant} A</p>
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === "Appareils" && (
           <div>
-            <p><strong>Onduleur :</strong> {projet.onduleur || "Non renseigné"}</p>
-            <p><strong>Batterie :</strong> {projet.batterie || "Non renseigné"}</p>
-            <p><strong>Datalog :</strong> {projet.datalog || "Non renseigné"}</p>
+            {donnees.appareils ? (
+              <>
+                <p><strong>Onduleur :</strong> {donnees.appareils.onduleur}</p>
+                <p><strong>Batterie :</strong> {donnees.appareils.batterie}</p>
+                <p><strong>Datalog :</strong> {donnees.appareils.datalog}</p>
+              </>
+            ) : (
+              <p>Chargement des appareils...</p>
+            )}
           </div>
         )}
 
         {activeTab === "Alertes" && (
           <div>
-            <p>Pas d'alertes pour l'instant.</p>
+            {donnees.alertes ? (
+              donnees.alertes.length > 0
+                ? donnees.alertes.map((a, i) => <p key={i}>{a}</p>)
+                : <p>Pas d'alertes pour l'instant.</p>
+            ) : (
+              <p>Chargement des alertes...</p>
+            )}
+          </div>
+        )}
+
+        {historique.length > 0 && activeTab === "Centrale" && (
+          <div style={{ marginTop: "40px", width: "100%", height: 300 }}>
+            <h4>Mesures Panneau Solaire (Temps réel)</h4>
+            <ResponsiveContainer>
+              <LineChart data={historique.slice().reverse()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="timestamp" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="tension" stroke="#8884d8" name="Tension (V)" />
+                <Line type="monotone" dataKey="courant" stroke="#82ca9d" name="Courant (A)" />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         )}
       </div>
@@ -54,14 +91,40 @@ export default function Monitor() {
   const [projets, setProjets] = useState([]);
   const [activeProjet, setActiveProjet] = useState(null);
   const [activeTab, setActiveTab] = useState("Centrale");
+  const [donnees, setDonnees] = useState({});
+  const [historique, setHistorique] = useState([]);
 
-  // Charger les projets depuis le backend
+  // Charger les projets
   useEffect(() => {
     fetch("http://localhost:5000/api/projets")
       .then(res => res.json())
       .then(data => setProjets(data))
       .catch(err => console.error(err));
   }, []);
+
+  // Récupération des données en temps réel selon le projet actif
+  useEffect(() => {
+    if (!activeProjet) return;
+
+    const interval = setInterval(() => {
+      fetch(`http://${activeProjet.moniteurIP}:8000/donnees-solaire`)
+        .then(res => res.json())
+        .then(data => {
+          // Structure attendue : { centrale: {...}, appareils: {...}, alertes: [...] }
+          setDonnees(data);
+
+          if (data.centrale) {
+            setHistorique(prev => [
+              { ...data.centrale, timestamp: new Date().toLocaleTimeString() },
+              ...prev
+            ].slice(0, 50));
+          }
+        })
+        .catch(err => console.error(err));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeProjet]);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -81,6 +144,8 @@ export default function Monitor() {
             onClick={() => {
               setActiveProjet(projet);
               setActiveTab("Centrale");
+              setDonnees({});
+              setHistorique([]);
             }}
           >
             {projet.image && (
@@ -97,7 +162,13 @@ export default function Monitor() {
       </div>
 
       {activeProjet && (
-        <Tabs projet={activeProjet} activeTab={activeTab} setActiveTab={setActiveTab} />
+        <Tabs
+          projet={activeProjet}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          donnees={donnees}
+          historique={historique}
+        />
       )}
     </div>
   );

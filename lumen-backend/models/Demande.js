@@ -2,11 +2,6 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../db");
 
 const Demande = sequelize.define("Demande", {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
   nomdemader: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -14,11 +9,10 @@ const Demande = sequelize.define("Demande", {
   emaildemander: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
   },
-  messagedemander:{
-    type:DataTypes.TEXT,
-    allowNull:false,
+  messagedemander: {
+    type: DataTypes.TEXT,
+    allowNull: false,
   },
   tempdemader: {
     type: DataTypes.DATE,
