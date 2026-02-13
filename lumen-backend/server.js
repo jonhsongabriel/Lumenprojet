@@ -136,34 +136,32 @@ app.get("/api/demande", async (req, res) => {
   }
 });
 
+
 app.post("/api/demande", async (req, res) => {
-  const { nomdemader, emaildemander, messagedemander, tempdemader } = req.body;
-
-  if (!nomdemader || !emaildemander || !messagedemander || !tempdemader) {
-    return res.status(400).json({ message: "Tous les champs sont obligatoires." });
-  }
-
   try {
-    const dateValid = new Date(tempdemader);
-    if (isNaN(dateValid)) {
-      return res.status(400).json({ message: "Format de date invalide." });
-    }
+    const { nomdemader, emaildemander, messagedemander } = req.body;
 
-    console.log("Création demande avec :", { nomdemader, emaildemander, messagedemander, tempdemader: dateValid });
+    if (!nomdemader || !emaildemander || !messagedemander) {
+      return res.status(400).json({ message: "Tous les champs sont obligatoires" });
+    }
 
     const newDemande = await Demande.create({
       nomdemader,
       emaildemander,
-      messagedemander,
-      tempdemader: dateValid,
+      messagedemander
     });
 
     res.status(201).json(newDemande);
-  } catch (err) {
-    console.error("Erreur ajout demande :", err);
-    res.status(500).json({ message: "Erreur serveur", details: err.message });
+
+  } catch (error) {
+    console.error("Erreur serveur :", error);
+    res.status(500).json({ message: "Erreur serveur" });
   }
 });
+
+
+
+
 
 
 // --- Routes PROJETS (upload image) ---

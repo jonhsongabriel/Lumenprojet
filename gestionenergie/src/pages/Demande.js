@@ -5,8 +5,7 @@ function Demande() {
   const [newDemande, setNewDemande] = useState({
     nomdemader: "",
     emaildemander: "",
-    messagedemander: "",
-    tempdemader: "",
+    messagedemander: ""
   });
 
   // --- Gérer la saisie des champs
@@ -18,23 +17,20 @@ function Demande() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const { nomdemader, emaildemander, messagedemander, tempdemader } = newDemande;
-    if (!nomdemader || !emaildemander || !messagedemander || !tempdemader) {
+    const { nomdemader, emaildemander, messagedemander } = newDemande;
+    if (!nomdemader || !emaildemander || !messagedemander ) {
       alert("Veuillez remplir tous les champs !");
       return;
     }
 
     try {
-      const formattedDate = new Date(tempdemader).toISOString();
-
       await axios.post("http://localhost:5000/api/demande", {
         nomdemader,
         emaildemander,
         messagedemander,
-        tempdemader: formattedDate,
       });
 
-      setNewDemande({ nomdemader: "", emaildemander: "", messagedemander: "", tempdemader: "" });
+      setNewDemande({ nomdemader: "", emaildemander: "", messagedemander: ""});
       alert("Demande ajoutée avec succès !");
     } catch (err) {
       console.error("Erreur Axios:", err);
@@ -78,17 +74,6 @@ function Demande() {
             value={newDemande.messagedemander}
             onChange={handleChange}
             placeholder="Rédigez votre message"
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label>Date</label>
-          <input
-            type="datetime-local"
-            className="form-control"
-            name="tempdemader"
-            value={newDemande.tempdemader}
-            onChange={handleChange}
             required
           />
         </div>

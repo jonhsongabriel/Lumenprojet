@@ -21,11 +21,11 @@ function Request() {
         <Table striped bordered hover>
           <thead>
             <tr>
-              <th>#</th>
-              <th>Nom du client</th>
-              <th>Type de demande</th>
-              <th>Description</th>
-              <th>Date</th>
+              <th className="text-success">N°</th>
+              <th className="text-success">Nom du client</th>
+              <th className="text-success">Type de demande</th>
+              <th className="text-success">Description</th>
+              <th className="text-success">Date</th>
             </tr>
           </thead>
           <tbody>
@@ -35,10 +35,15 @@ function Request() {
                 <td>{demande.nomdemader}</td>
                 <td>{demande.emaildemander}</td>
                 <td>{demande.messagedemander}</td>
-                <td>{new Date(demande.date).toLocaleDateString()}</td>
+                <td>
+                  {demande.createdAt
+                    ? new Date(demande.createdAt).toLocaleString("fr-FR")
+                    : "—"}
+                </td>
               </tr>
             ))}
           </tbody>
+
         </Table>
       )}
     </div>
