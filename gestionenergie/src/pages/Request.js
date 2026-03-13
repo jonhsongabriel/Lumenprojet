@@ -3,10 +3,11 @@ import { Table } from "react-bootstrap";
 
 function Request() {
   const [demandes, setDemandes] = useState([]);
+  const BASE_URL = ""; // URL relative → fonctionne local et prod
 
   useEffect(() => {
     // récupérer les demandes depuis l'API
-    fetch("http://localhost:5000/api/demande")
+    fetch(`${BASE_URL}/api/lumen/demande`)
       .then(res => res.json())
       .then(data => setDemandes(data))
       .catch(() => setDemandes([]));
@@ -43,7 +44,6 @@ function Request() {
               </tr>
             ))}
           </tbody>
-
         </Table>
       )}
     </div>

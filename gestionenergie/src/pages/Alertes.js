@@ -1,14 +1,21 @@
+// src/pages/Alert.js
 import React, { useEffect, useState } from "react";
+import API_URL from "../config/api"; // <-- URL centralisée local/prod
 
 export default function Alert() {
   const [alertes, setAlertes] = useState([]);
 
   useEffect(() => {
     // Récupérer les alertes depuis le backend
-    fetch("http://localhost:5000/api/alertes")
-      .then(res => res.json())
-      .then(data => setAlertes(data))
-      .catch(err => console.error("Erreur fetch alertes :", err));
+    fetch(`${API_URL}/alertes`) // <-- utilise API_URL centralisé
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`Erreur HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => setAlertes(data))
+      .catch((err) => console.error("Erreur fetch alertes :", err));
   }, []);
 
   return (
@@ -33,7 +40,9 @@ export default function Alert() {
                 <td style={{ border: "1px solid #ccc", padding: "8px" }}>{alerte.id}</td>
                 <td style={{ border: "1px solid #ccc", padding: "8px" }}>{alerte.projet || "N/A"}</td>
                 <td style={{ border: "1px solid #ccc", padding: "8px" }}>{alerte.message}</td>
-                <td style={{ border: "1px solid #ccc", padding: "8px" }}>{new Date(alerte.timestamp).toLocaleString()}</td>
+                <td style={{ border: "1px solid #ccc", padding: "8px" }}>
+                  {new Date(alerte.timestamp).toLocaleString()}
+                </td>
               </tr>
             ))}
           </tbody>

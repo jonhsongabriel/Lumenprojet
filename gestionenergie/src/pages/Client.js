@@ -1,5 +1,7 @@
+// src/pages/Client.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import API_URL from "../config/api"; // <-- URL centralisée
 
 function Client() {
   const [clients, setClients] = useState([]);
@@ -18,9 +20,9 @@ function Client() {
 
   const fetchClients = () => {
     axios
-      .get("http://localhost:5000/api/client") // attention: minuscules
+      .get(`${API_URL}/client`) // <-- utilise API_URL
       .then(res => setClients(res.data))
-      .catch(err => console.error(err));
+      .catch(err => console.error("Erreur fetch clients :", err));
   };
 
   // Gérer la saisie
@@ -32,37 +34,37 @@ function Client() {
   const handleSubmit = (e) => {
     e.preventDefault();
     axios
-      .post("http://localhost:5000/api/client", newClient)
+      .post(`${API_URL}/client`, newClient) // <-- utilise API_URL
       .then(() => {
         fetchClients();
         setNewClient({ nomclient: "", prenomclient: "", adresseclient: "", contactclient: "", emailclient: "" });
       })
-      .catch(err => console.error(err));
+      .catch(err => console.error("Erreur ajout client :", err));
   };
 
   // Supprimer un client
   const handleDelete = (id) => {
     if (window.confirm("Voulez-vous vraiment supprimer ce client ?")) {
       axios
-        .delete(`http://localhost:5000/api/client/${id}`)
+        .delete(`${API_URL}/client/${id}`) // <-- utilise API_URL
         .then(() => fetchClients())
-        .catch(err => console.error(err));
+        .catch(err => console.error("Erreur suppression client :", err));
     }
   };
 
   // Modifier un client
   const handleEdit = (client) => {
     const nomclient = prompt("Nom :", client.nomclient);
-    const prenomclient = prompt("Prenom :", client.prenomclient);
+    const prenomclient = prompt("Prénom :", client.prenomclient);
     const adresseclient = prompt("Adresse :", client.adresseclient);
     const contactclient = prompt("Contact :", client.contactclient);
     const emailclient = prompt("Email :", client.emailclient);
 
     if (nomclient && prenomclient && adresseclient && contactclient && emailclient) {
       axios
-        .put(`http://localhost:5000/api/client/${client.id}`, { nomclient, prenomclient, adresseclient, contactclient, emailclient })
+        .put(`${API_URL}/client/${client.id}`, { nomclient, prenomclient, adresseclient, contactclient, emailclient }) // <-- utilise API_URL
         .then(() => fetchClients())
-        .catch(err => console.error(err));
+        .catch(err => console.error("Erreur modification client :", err));
     }
   };
 

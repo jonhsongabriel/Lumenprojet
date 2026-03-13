@@ -15,11 +15,10 @@ const Demande = sequelize.define("Demande", {
     allowNull: false,
   },
   tempdemader: {
-  type: DataTypes.DATE,
-  allowNull: false,
-  defaultValue: DataTypes.NOW, // 🔥 date automatique
-},
-
+    type: DataTypes.DATE,          // <- Sequelize gère TIMESTAMP
+    allowNull: false,
+    defaultValue: DataTypes.NOW,   // date automatique
+  },
 });
 
 module.exports = Demande;

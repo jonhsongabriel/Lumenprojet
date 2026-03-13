@@ -1,40 +1,48 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-function Demande() {
+// URL dynamique selon environnement
+const BASE_URL =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:5000"
+    : ""; // prod, NGINX fait le proxy
+
+export default function Demande() {
   const [newDemande, setNewDemande] = useState({
     nomdemader: "",
     emaildemander: "",
     messagedemander: ""
   });
 
-  // --- Gérer la saisie des champs
   const handleChange = (e) => {
     setNewDemande({ ...newDemande, [e.target.name]: e.target.value });
   };
 
-  // --- Soumettre une nouvelle demande
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { nomdemader, emaildemander, messagedemander } = newDemande;
-    if (!nomdemader || !emaildemander || !messagedemander ) {
+    if (!nomdemader || !emaildemander || !messagedemander) {
       alert("Veuillez remplir tous les champs !");
       return;
     }
 
     try {
-      await axios.post("http://localhost:5000/api/demande", {
+      const response = await axios.post(`${BASE_URL}/api/lumen/demande`, {
         nomdemader,
         emaildemander,
-        messagedemander,
+        messagedemander
       });
 
-      setNewDemande({ nomdemader: "", emaildemander: "", messagedemander: ""});
+      setNewDemande({ nomdemader: "", emaildemander: "", messagedemander: "" });
       alert("Demande ajoutée avec succès !");
+      console.log("Nouvelle demande :", response.data);
     } catch (err) {
       console.error("Erreur Axios:", err);
-      alert("Erreur lors de l'ajout de la demande : " + (err.response?.data?.message || err.message));
+      alert(
+        "Erreur lors de l'ajout de la demande : " +
+          (err.response?.data?.message || err.message)
+      );
     }
   };
 
@@ -84,5 +92,3 @@ function Demande() {
     </div>
   );
 }
-
-export default Demande;

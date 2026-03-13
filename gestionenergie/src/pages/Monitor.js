@@ -1,7 +1,9 @@
+// src/pages/Monitor.js
 import React, { useState, useEffect } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
+import API_URL from "../config/api"; // config dynamique local/prod
 
 // Onglets projet
 function Tabs({ activeTab, setActiveTab, projet, donnees, historique }) {
@@ -94,43 +96,49 @@ export default function Monitor() {
   const [donnees, setDonnees] = useState({});
   const [historique, setHistorique] = useState([]);
 
+  // Utiliser API_URL dynamique pour local/prod
+  const API_BASE = API_URL;
+
   // Charger les projets
   useEffect(() => {
-    fetch("http://localhost:5000/api/projets")
+    fetch(`${API_BASE}/projets`)
       .then(res => res.json())
       .then(data => setProjets(data))
-      .catch(err => console.error(err));
-  }, []);
+      .catch(err => console.error("Erreur fetch projets :", err));
+  }, [API_BASE]);
 
-  // Récupération des données en temps réel selon le projet actif
-  useEffect(() => {
-    if (!activeProjet) return;
+ useEffect(() => {
+  if (!activeProjet || !activeProjet.moniteurIP) return; // ← vérification
 
-    const interval = setInterval(() => {
-      fetch(`http://${activeProjet.moniteurIP}:8000/donnees-solaire`)
-        .then(res => res.json())
-        .then(data => {
-          // Structure attendue : { centrale: {...}, appareils: {...}, alertes: [...] }
-          setDonnees(data);
+  const interval = setInterval(() => {
+    const moniteurURL = activeProjet.moniteurIP.startsWith("http")
+      ? activeProjet.moniteurIP
+      : `http://${activeProjet.moniteurIP}:8000`;
 
-          if (data.centrale) {
-            setHistorique(prev => [
-              { ...data.centrale, timestamp: new Date().toLocaleTimeString() },
-              ...prev
-            ].slice(0, 50));
-          }
-        })
-        .catch(err => console.error(err));
-    }, 1000);
+    fetch(`${moniteurURL}/donnees-solaire`)
+      .then(res => res.json())
+      .then(data => {
+        setDonnees(data);
 
-    return () => clearInterval(interval);
-  }, [activeProjet]);
+        if (data.centrale) {
+          setHistorique(prev => [
+            { ...data.centrale, timestamp: new Date().toLocaleTimeString() },
+            ...prev
+          ].slice(0, 50));
+        }
+      })
+      .catch(err => console.error("Erreur fetch données temps réel :", err));
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [activeProjet]);
 
   return (
     <div style={{ padding: "20px" }}>
       <h1>Dashboard - Projets Lumen</h1>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", marginBottom: "30px" }}>
+        {projets.length === 0 && <p>Aucun projet disponible</p>}
         {projets.map((projet, idx) => (
           <div
             key={idx}
@@ -150,7 +158,7 @@ export default function Monitor() {
           >
             {projet.image && (
               <img
-                src={`http://localhost:5000${projet.image}`}
+                src={projet.image} // chemin relatif /images/... depuis Node.js
                 alt={projet.nom}
                 style={{ width: "100%", height: "120px", objectFit: "cover", borderRadius: "5px" }}
               />

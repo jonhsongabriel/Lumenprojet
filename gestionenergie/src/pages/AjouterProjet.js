@@ -1,36 +1,48 @@
+// src/pages/AjouterProjet.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API_URL from "../config/api";
 
 export default function AjouterProjet() {
   const [form, setForm] = useState({
     nom: "",
     description: "",
     imageFile: null,
-    moniteurIP: "", // adresse du moniteur
+    moniteurIP: "",
   });
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("nom", form.nom);
-    formData.append("description", form.description);
-    formData.append("moniteurIP", form.moniteurIP); // on envoie l'IP
-    if (form.imageFile) formData.append("image", form.imageFile);
 
     try {
-      const res = await fetch("http://localhost:5000/api/projets", {
+      const formData = new FormData();
+      formData.append("nom", form.nom);
+      formData.append("description", form.description);
+      formData.append("moniteurIP", form.moniteurIP);
+      if (form.imageFile) formData.append("image", form.imageFile);
+
+      const res = await fetch(`${API_URL}/projets`, {
         method: "POST",
         body: formData,
       });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Erreur HTTP ${res.status}`);
+      }
+
       const data = await res.json();
       console.log("Projet ajouté :", data);
 
-      // Après ajout → revenir au dashboard
-      navigate("/dashboard");
+      alert("Projet ajouté avec succès !");
+      navigate("/dashboard"); // redirection après ajout
     } catch (err) {
       console.error("Erreur ajout projet :", err);
+      alert(
+        "Impossible d'ajouter le projet. Vérifiez le backend, la connexion et le dossier public/images."
+      );
     }
   };
 
@@ -39,19 +51,26 @@ export default function AjouterProjet() {
       <h2>Ajouter un projet</h2>
       <form
         onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "400px" }}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          maxWidth: "400px",
+        }}
       >
         <input
           type="text"
-          placeholder="Nom"
+          placeholder="Nom du projet"
           value={form.nom}
           onChange={(e) => setForm({ ...form, nom: e.target.value })}
           required
         />
         <textarea
-          placeholder="Description"
+          placeholder="Description du projet"
           value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
+          onChange={(e) =>
+            setForm({ ...form, description: e.target.value })
+          }
           required
         />
         <input
