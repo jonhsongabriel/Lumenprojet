@@ -1,41 +1,66 @@
 import React, { useEffect, useState } from "react";
 import { Table } from "react-bootstrap";
+import API_URL from "../config/api";
 
-function Request() {
+export default function Request() {
   const [demandes, setDemandes] = useState([]);
-  const BASE_URL = ""; // URL relative → fonctionne local et prod
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    // récupérer les demandes depuis l'API
-    fetch(`${BASE_URL}/api/lumen/demande`)
-      .then(res => res.json())
-      .then(data => setDemandes(data))
-      .catch(() => setDemandes([]));
+    const fetchDemandes = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const res = await fetch(`${API_URL}/demande`);
+        if (!res.ok) throw new Error(`Erreur HTTP ${res.status}`);
+
+        const data = await res.json();
+
+        // S'assurer que c'est un tableau
+        setDemandes(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Erreur fetch demandes :", err);
+        setError("Impossible de charger les demandes");
+        setDemandes([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDemandes();
   }, []);
 
   return (
     <div className="container mt-4">
       <h1>Liste des demandes</h1>
-      {demandes.length === 0 ? (
+
+      {loading && <p>Chargement...</p>}
+      {error && <div className="alert alert-danger">{error}</div>}
+
+      {!loading && demandes.length === 0 && !error && (
         <p>Aucune demande pour le moment.</p>
-      ) : (
-        <Table striped bordered hover>
+      )}
+
+      {demandes.length > 0 && (
+        <Table striped bordered hover responsive>
           <thead>
             <tr>
               <th className="text-success">N°</th>
               <th className="text-success">Nom du client</th>
-              <th className="text-success">Type de demande</th>
-              <th className="text-success">Description</th>
+              <th className="text-success">Email</th>
+              <th className="text-success">Message</th>
               <th className="text-success">Date</th>
             </tr>
           </thead>
           <tbody>
             {demandes.map((demande, index) => (
-              <tr key={demande.id}>
+              <tr key={demande.id || index}>
                 <td>{index + 1}</td>
-                <td>{demande.nomdemader}</td>
-                <td>{demande.emaildemander}</td>
-                <td>{demande.messagedemander}</td>
+                <td>{demande.nomdemader || "—"}</td>
+                <td>{demande.emaildemander || "—"}</td>
+                <td>{demande.messagedemander || "—"}</td>
                 <td>
                   {demande.createdAt
                     ? new Date(demande.createdAt).toLocaleString("fr-FR")
@@ -49,5 +74,3 @@ function Request() {
     </div>
   );
 }
-
-export default Request;

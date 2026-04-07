@@ -1,85 +1,93 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import requests
 import sqlite3
 from datetime import datetime
+import os
 
+# ----------------------
+# Application FastAPI
+# ----------------------
 app = FastAPI(title="Moniteur Panneau Solaire Lumen")
 
-# CORS pour React
+# ----------------------
+# Middleware CORS
+# ----------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permet tous les front (prod & dev)
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-DB_FILE = "donnees_solaire.db"
+# ----------------------
+# Chemin DB standardisé
+# ----------------------
+DB_DIR = "/data"
+DB_FILE = os.path.join(DB_DIR, "donnees_solaire.db")
+os.makedirs(DB_DIR, exist_ok=True)  # Création du dossier /data pour volume Docker
 
+# ----------------------
+# Initialisation DB
+# ----------------------
 def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS mesures (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT,
-            tension REAL,
-            courant REAL,
-            puissance REAL
-        )
-    """)
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS mesures (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                tension REAL NOT NULL,
+                courant REAL NOT NULL,
+                puissance REAL NOT NULL
+            )
+        """)
+        conn.commit()
 
-def enregistrer_donnees(tension, courant, puissance):
-    try:
-        conn = sqlite3.connect(DB_FILE)
+init_db()
+
+# ----------------------
+# Fonction pour enregistrer les données
+# ----------------------
+def enregistrer_donnees(tension: float, courant: float, puissance: float):
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
         c.execute(
             "INSERT INTO mesures (timestamp, tension, courant, puissance) VALUES (?, ?, ?, ?)",
             (datetime.now().isoformat(), tension, courant, puissance)
         )
         conn.commit()
-    finally:
-        conn.close()
 
-init_db()
-
-MONITEUR_URL = "http://192.168.1.100:5000/api/donnees"
+# ----------------------
+# Endpoints
+# ----------------------
+@app.get("/")
+def root():
+    return {"status": "FastAPI solaire OK"}
 
 @app.get("/donnees-solaire")
 def get_donnees():
+    """
+    Simule la récupération de données du panneau solaire,
+    enregistre les mesures dans la DB et retourne les valeurs.
+    """
     try:
-        response = requests.get(MONITEUR_URL, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        tension = float(data.get("tension", 0))
-        courant = float(data.get("courant", 0))
-        puissance = float(data.get("puissance", 0))
-
-        # Enregistrement historique
+        tension, courant, puissance = 230, 5, 1150  # Valeurs simulées
         enregistrer_donnees(tension, courant, puissance)
-
         return {"tension": tension, "courant": courant, "puissance": puissance}
     except Exception as e:
-        # Retourne toujours un format compatible pour le front
         return {"tension": 0, "courant": 0, "puissance": 0, "erreur": str(e)}
 
 @app.get("/historique")
-def get_historique():
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT * FROM mesures ORDER BY id DESC LIMIT 100")
-    rows = c.fetchall()
-    conn.close()
+def get_historique(limit: int = 100):
+    """
+    Retourne les dernières mesures enregistrées dans la DB
+    """
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("SELECT * FROM mesures ORDER BY id DESC LIMIT ?", (limit,))
+        rows = c.fetchall()
     return [
-        {
-            "id": row[0],
-            "timestamp": row[1],
-            "tension": row[2],
-            "courant": row[3],
-            "puissance": row[4]
-        }
-        for row in rows
+        {"id": r[0], "timestamp": r[1], "tension": r[2], "courant": r[3], "puissance": r[4]}
+        for r in rows
     ]

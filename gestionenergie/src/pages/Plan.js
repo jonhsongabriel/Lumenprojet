@@ -17,9 +17,15 @@ const center = {
   lng: 47.5079,
 };
 
+// URL API FastAPI (moniteur / carte)
+const API_FASTAPI =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:8000"
+    : ""; // en prod via Nginx proxy
+
 function Plan() {
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: "TA_CLE_API",
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "TA_CLE_API",
     libraries: ["places"],
   });
 
@@ -27,13 +33,14 @@ function Plan() {
   const [nom, setNom] = useState("");
   const [sites, setSites] = useState([]);
   const [searchBox, setSearchBox] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const loadSites = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/sites");
-      setSites(res.data);
+      const res = await axios.get(`${API_FASTAPI}/sites`);
+      setSites(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error(err);
+      console.error("Erreur chargement sites:", err);
     }
   };
 
@@ -55,7 +62,9 @@ function Plan() {
     }
 
     try {
-      await axios.post("http://localhost:8000/location", {
+      setLoading(true);
+
+      await axios.post(`${API_FASTAPI}/location`, {
         nom,
         latitude: position.lat,
         longitude: position.lng,
@@ -66,7 +75,10 @@ function Plan() {
       setPosition(null);
       loadSites();
     } catch (err) {
-      console.error(err);
+      console.error("Erreur enregistrement:", err);
+      alert("Erreur lors de l'enregistrement");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -132,8 +144,12 @@ function Plan() {
         <div className="mt-3">
           <p><strong>Latitude :</strong> {position.lat}</p>
           <p><strong>Longitude :</strong> {position.lng}</p>
-          <button className="btn btn-success" onClick={saveLocation}>
-            ✅ Valider l’emplacement
+          <button
+            className="btn btn-success"
+            onClick={saveLocation}
+            disabled={loading}
+          >
+            {loading ? "Enregistrement..." : "✅ Valider l’emplacement"}
           </button>
         </div>
       )}

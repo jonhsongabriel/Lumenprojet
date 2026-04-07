@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React from "react";
 import { Container, Row, Col, Nav } from "react-bootstrap";
 import { Facebook, Twitter, Instagram, Linkedin } from "react-bootstrap-icons";
 import { Link } from "react-router-dom";
@@ -23,20 +23,20 @@ function Footer() {
           {/* --- Contact --- */}
           <Col md={4} className="mb-3">
             <h5>Contact</h5>
-            <p className="mb-1">Email: support@lumen.com</p>
-            <p className="mb-1">Tel: +261 34 12 345 67</p>
+            <p className="mb-1">Email: <a href="mailto:support@lumen.com" className="text-light">support@lumen.com</a></p>
+            <p className="mb-1">Tel: <a href="tel:+261341234567" className="text-light">+261 34 12 345 67</a></p>
             <div className="d-flex gap-2 mt-2">
-              <a href="#" className="text-light"><Facebook size={20} /></a>
-              <a href="#" className="text-light"><Twitter size={20} /></a>
-              <a href="#" className="text-light"><Instagram size={20} /></a>
-              <a href="#" className="text-light"><Linkedin size={20} /></a>
+              <a href="#" className="text-light" aria-label="Facebook"><Facebook size={20} /></a>
+              <a href="#" className="text-light" aria-label="Twitter"><Twitter size={20} /></a>
+              <a href="#" className="text-light" aria-label="Instagram"><Instagram size={20} /></a>
+              <a href="#" className="text-light" aria-label="Linkedin"><Linkedin size={20} /></a>
             </div>
           </Col>
 
           {/* --- Adresse --- */}
           <Col md={4} className="mb-3">
             <h5>Adresse</h5>
-            <p>Andranobevava Tranofitaratra Antananarivo, Madagascar</p>
+            <p>Andranobevava Tranofitaratra, Antananarivo, Madagascar</p>
             <p>BP 101, Antananarivo 101</p>
           </Col>
         </Row>

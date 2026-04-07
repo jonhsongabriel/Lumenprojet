@@ -5,7 +5,7 @@ import axios from "axios";
 const BASE_URL =
   process.env.NODE_ENV === "development"
     ? "http://localhost:5000"
-    : ""; // prod, NGINX fait le proxy
+    : ""; // prod via Nginx proxy
 
 export default function Demande() {
   const [newDemande, setNewDemande] = useState({
@@ -13,6 +13,8 @@ export default function Demande() {
     emaildemander: "",
     messagedemander: ""
   });
+
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setNewDemande({ ...newDemande, [e.target.name]: e.target.value });
@@ -28,27 +30,38 @@ export default function Demande() {
     }
 
     try {
+      setLoading(true);
+
       const response = await axios.post(`${BASE_URL}/api/lumen/demande`, {
         nomdemader,
         emaildemander,
         messagedemander
       });
 
-      setNewDemande({ nomdemader: "", emaildemander: "", messagedemander: "" });
+      setNewDemande({
+        nomdemader: "",
+        emaildemander: "",
+        messagedemander: ""
+      });
+
       alert("Demande ajoutée avec succès !");
       console.log("Nouvelle demande :", response.data);
+
     } catch (err) {
       console.error("Erreur Axios:", err);
       alert(
         "Erreur lors de l'ajout de la demande : " +
-          (err.response?.data?.message || err.message)
+        (err.response?.data?.message || err.message)
       );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="container mt-3">
       <h1>Ajouter une nouvelle demande</h1>
+
       <form onSubmit={handleSubmit} className="mb-4 bg-success text-white p-3 rounded">
         <div className="mb-3">
           <label>Nom du demandeur</label>
@@ -62,6 +75,7 @@ export default function Demande() {
             required
           />
         </div>
+
         <div className="mb-3">
           <label>Email</label>
           <input
@@ -74,6 +88,7 @@ export default function Demande() {
             required
           />
         </div>
+
         <div className="mb-3">
           <label>Message</label>
           <textarea
@@ -85,8 +100,13 @@ export default function Demande() {
             required
           />
         </div>
-        <button type="submit" className="btn btn-light text-success">
-          Ajouter
+
+        <button
+          type="submit"
+          className="btn btn-light text-success"
+          disabled={loading}
+        >
+          {loading ? "Envoi..." : "Ajouter"}
         </button>
       </form>
     </div>

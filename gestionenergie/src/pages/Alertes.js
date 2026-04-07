@@ -1,22 +1,42 @@
 // src/pages/Alert.js
 import React, { useEffect, useState } from "react";
-import API_URL from "../config/api"; // <-- URL centralisée local/prod
+import API_URL from "../config/api";
 
 export default function Alert() {
   const [alertes, setAlertes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Récupérer les alertes depuis le backend
-    fetch(`${API_URL}/alertes`) // <-- utilise API_URL centralisé
-      .then((res) => {
+    const fetchAlertes = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await fetch(`${API_URL}/alertes`);
+
         if (!res.ok) {
           throw new Error(`Erreur HTTP ${res.status}`);
         }
-        return res.json();
-      })
-      .then((data) => setAlertes(data))
-      .catch((err) => console.error("Erreur fetch alertes :", err));
+
+        const data = await res.json();
+
+        // ✅ Correction importante : vérifier que c'est bien un tableau
+        setAlertes(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Erreur fetch alertes :", err);
+        setError(err.message || "Erreur inconnue");
+        setAlertes([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAlertes();
   }, []);
+
+  if (loading) return <p style={{ padding: "20px" }}>Chargement des alertes...</p>;
+  if (error) return <p style={{ padding: "20px", color: "red" }}>Erreur : {error}</p>;
 
   return (
     <div style={{ padding: "20px" }}>
@@ -35,13 +55,21 @@ export default function Alert() {
             </tr>
           </thead>
           <tbody>
-            {alertes.map((alerte, idx) => (
-              <tr key={idx}>
-                <td style={{ border: "1px solid #ccc", padding: "8px" }}>{alerte.id}</td>
-                <td style={{ border: "1px solid #ccc", padding: "8px" }}>{alerte.projet || "N/A"}</td>
-                <td style={{ border: "1px solid #ccc", padding: "8px" }}>{alerte.message}</td>
+            {alertes.map((alerte) => (
+              <tr key={alerte.id || Math.random()}>
                 <td style={{ border: "1px solid #ccc", padding: "8px" }}>
-                  {new Date(alerte.timestamp).toLocaleString()}
+                  {alerte.id || "N/A"}
+                </td>
+                <td style={{ border: "1px solid #ccc", padding: "8px" }}>
+                  {alerte.projet || "N/A"}
+                </td>
+                <td style={{ border: "1px solid #ccc", padding: "8px" }}>
+                  {alerte.message || "N/A"}
+                </td>
+                <td style={{ border: "1px solid #ccc", padding: "8px" }}>
+                  {alerte.timestamp
+                    ? new Date(alerte.timestamp).toLocaleString()
+                    : "N/A"}
                 </td>
               </tr>
             ))}

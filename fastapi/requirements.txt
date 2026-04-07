@@ -1,4 +1,2 @@
-fastapi
-uvicorn
-pymodbus      # si vous utilisez Modbus
-requests      # si vous utilisez API HTTP
+fastapi==0.111.1
+uvicorn[standard]==0.23.2
