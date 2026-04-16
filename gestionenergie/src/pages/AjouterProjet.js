@@ -1,9 +1,11 @@
-// src/pages/AjouterProjet.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { QrReader } from "react-qr-reader";
 import API_URL from "../config/api";
 
 export default function AjouterProjet() {
+  const [mode, setMode] = useState("manuel"); // "manuel" ou "qr"
+
   const [form, setForm] = useState({
     nom: "",
     description: "",
@@ -12,6 +14,26 @@ export default function AjouterProjet() {
   });
 
   const navigate = useNavigate();
+
+  // 🔥 Scan QR
+  const handleScan = (result) => {
+    if (result) {
+      try {
+        const data = JSON.parse(result?.text);
+
+        setForm({
+          nom: data.nom || "",
+          description: data.description || "",
+          moniteurIP: data.ip || "",
+          imageFile: null,
+        });
+
+        setMode("manuel"); // revenir au formulaire rempli
+      } catch {
+        alert("QR invalide ❌");
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,65 +50,88 @@ export default function AjouterProjet() {
         body: formData,
       });
 
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erreur HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error("Erreur ajout");
 
-      const data = await res.json();
-      console.log("Projet ajouté :", data);
+      alert("Projet ajouté !");
+      navigate("/dashboard");
 
-      alert("Projet ajouté avec succès !");
-      navigate("/dashboard"); // redirection après ajout
     } catch (err) {
-      console.error("Erreur ajout projet :", err);
-      alert(
-        "Impossible d'ajouter le projet. Vérifiez le backend, la connexion et le dossier public/images."
-      );
+      alert("Erreur ajout projet");
     }
   };
 
   return (
-    <div style={{ padding: "20px" }}>
+    <div className="container mt-4">
       <h2>Ajouter un projet</h2>
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "10px",
-          maxWidth: "400px",
-        }}
-      >
-        <input
-          type="text"
-          placeholder="Nom du projet"
-          value={form.nom}
-          onChange={(e) => setForm({ ...form, nom: e.target.value })}
-          required
-        />
-        <textarea
-          placeholder="Description du projet"
-          value={form.description}
-          onChange={(e) =>
-            setForm({ ...form, description: e.target.value })
-          }
-          required
-        />
-        <input
-          type="text"
-          placeholder="IP du moniteur"
-          value={form.moniteurIP}
-          onChange={(e) => setForm({ ...form, moniteurIP: e.target.value })}
-          required
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setForm({ ...form, imageFile: e.target.files[0] })}
-        />
-        <button type="submit">Ajouter le projet</button>
-      </form>
+
+      {/* 🔥 CHOIX MODE */}
+      <div className="mb-3">
+        <button
+          className={`btn me-2 ${mode === "manuel" ? "btn-primary" : "btn-outline-primary"}`}
+          onClick={() => setMode("manuel")}
+        >
+          ✍️ Manuel
+        </button>
+
+        <button
+          className={`btn ${mode === "qr" ? "btn-dark" : "btn-outline-dark"}`}
+          onClick={() => setMode("qr")}
+        >
+          📷 QR Code
+        </button>
+      </div>
+
+      {/* 🔥 MODE QR */}
+      {mode === "qr" && (
+        <div style={{ maxWidth: "300px" }}>
+          <p>Scanner le QR Code du projet</p>
+          <QrReader
+            constraints={{ facingMode: "environment" }}
+            onResult={(result) => handleScan(result)}
+          />
+        </div>
+      )}
+
+      {/* 🔥 MODE MANUEL */}
+      {mode === "manuel" && (
+        <form onSubmit={handleSubmit} className="d-flex flex-column gap-2" style={{ maxWidth: "400px" }}>
+          
+          <input
+            className="form-control"
+            placeholder="Nom du projet"
+            value={form.nom}
+            onChange={(e) => setForm({ ...form, nom: e.target.value })}
+            required
+          />
+
+          <textarea
+            className="form-control"
+            placeholder="Description"
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            required
+          />
+
+          <input
+            className="form-control"
+            placeholder="IP du moniteur"
+            value={form.moniteurIP}
+            onChange={(e) => setForm({ ...form, moniteurIP: e.target.value })}
+            required
+          />
+
+          <input
+            className="form-control"
+            type="file"
+            accept="image/*"
+            onChange={(e) => setForm({ ...form, imageFile: e.target.files[0] })}
+          />
+
+          <button className="btn btn-success">
+            Ajouter projet
+          </button>
+        </form>
+      )}
     </div>
   );
 }

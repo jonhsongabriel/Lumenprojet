@@ -16,7 +16,7 @@ const Demande = require("./models/Demande");
 const User = require("./models/User"); // si tu veux garder User séparé
 
 const app = express();
-const PORT = process.env.PORT || 9000;
+const PORT = process.env.PORT || 5000;
 const SECRET_KEY = process.env.SECRET_KEY || "lumen_secret_2026";
 
 // Middlewares

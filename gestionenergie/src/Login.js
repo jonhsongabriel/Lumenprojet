@@ -1,68 +1,97 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost/api/lumen";
+const API_URL = "/api/lumen";
 
 function Login() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [motdepasse, setMotdepasse] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       const res = await fetch(`${API_URL}/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ email, password })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, motdepasse }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Erreur login");
+      if (!res.ok) {
+        throw new Error(data.message || "Erreur connexion");
+      }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("role", data.role);
+      // option: sauvegarde user
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      navigate("/");
+      navigate("/dashboard");
+
     } catch (err) {
-      alert(err.message);
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2>Connexion</h2>
+    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
+      <div className="card shadow p-4" style={{ width: "380px" }}>
 
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          className="form-control mb-2"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <h2 className="text-center text-success mb-2"><b>LUMEN</b></h2>
+        <p className="text-center text-muted">Connexion</p>
 
-        <input
-          type="password"
-          placeholder="Mot de passe"
-          className="form-control mb-2"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        {error && <div className="alert alert-danger">{error}</div>}
 
-        <button className="btn btn-primary w-100">
-          Se connecter
+        <form onSubmit={handleSubmit}>
+
+          <div className="mb-3">
+            <input
+              type="email"
+              className="form-control"
+              placeholder="Adresse email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <div className="mb-3">
+            <input
+              type="password"
+              className="form-control"
+              placeholder="Mot de passe"
+              value={motdepasse}
+              onChange={(e) => setMotdepasse(e.target.value)}
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-primary w-100"
+            disabled={loading}
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+        </form>
+
+        <hr />
+
+        <button
+          className="btn btn-success w-100"
+          onClick={() => navigate("/register")}
+        >
+          Créer un compte
         </button>
-      </form>
 
-      {/* 🔥 LIEN INSCRIPTION */}
-      <div className="mt-3 text-center">
-        <span>Pas de compte ? </span>
-        <Link to="/register">Créer un compte</Link>
       </div>
     </div>
   );

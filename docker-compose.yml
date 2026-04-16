@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-
   db:
     image: postgres:16
     container_name: lumen-postgres
@@ -21,18 +20,9 @@ services:
     env_file:
       - .env
     ports:
-      - "9000:9000"
+      - "5000:5000"
     depends_on:
       - db
-    networks:
-      - lumen-network
-    restart: unless-stopped
-
-  fastapi:
-    build: ./fastapi
-    container_name: fastapi
-    ports:
-      - "8000:8000"
     networks:
       - lumen-network
     restart: unless-stopped
@@ -47,10 +37,20 @@ services:
       - ./gestionenergie/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - lumen-backend
-      - fastapi
     networks:
       - lumen-network
     restart: unless-stopped
+
+  # 🔥 AJOUT ICI (DANS services)
+  gestionenergie:
+    build: ./gestionenergie
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./gestionenergie:/app
+    command: npm start
+    networks:
+      - lumen-network
 
 networks:
   lumen-network:
