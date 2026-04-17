@@ -1,32 +1,57 @@
-// lumen-backend/routes/auth.js (exemple)
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const Administrateur = require('../models/Administrateur');
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Administrateur = require("../models/Administrateur");
 
-// POST /api/lumen/login
-router.post('/login', async (req, res) => {
+const SECRET_KEY = process.env.SECRET_KEY || "lumen_secret_2026";
+
+// =========================
+// LOGIN
+// =========================
+router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const user = await Administrateur.findOne({ where: { email } });
+    const { email, motdepasse } = req.body || {};
 
-    if (!user) return res.status(401).json({ message: "Utilisateur non trouvé" });
+    console.log("LOGIN BODY:", req.body);
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(401).json({ message: "Mot de passe incorrect" });
+    // 🔥 validation minimale
+    if (!email || !motdepasse) {
+      return res.status(400).json({ message: "Email et mot de passe requis" });
+    }
 
-    // Générer un token JWT
-    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const cleanEmail = email.toLowerCase().trim();
 
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+    const user = await Administrateur.findOne({
+      where: { email: cleanEmail },
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur introuvable" });
+    }
+
+    const valid = await bcrypt.compare(motdepasse, user.motdepasse);
+
+    if (!valid) {
+      return res.status(401).json({ message: "Mot de passe incorrect" });
+    }
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      SECRET_KEY,
+      { expiresIn: "1d" }
+    );
+
+    return res.json({
+      token,
+      role: user.role,
+      nom: user.nom,
+    });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("ERREUR LOGIN:", err);
+    return res.status(500).json({ message: "Erreur serveur" });
   }
 });
 
 module.exports = router;
-
-app.get("/api/lumen/test", (req, res) => {
-  res.json({ message: "Backend OK" });
-});

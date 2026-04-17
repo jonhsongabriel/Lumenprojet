@@ -1,20 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API_URL = "/api/lumen";
+import API_URL from "./config/api";
 
 function Login() {
   const [email, setEmail] = useState("");
   const [motdepasse, setMotdepasse] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError("");
 
     try {
       const res = await fetch(`${API_URL}/login`, {
@@ -29,8 +28,10 @@ function Login() {
         throw new Error(data.message || "Erreur connexion");
       }
 
-      // option: sauvegarde user
-      localStorage.setItem("user", JSON.stringify(data.user));
+      // 🔐 STORAGE STABLE
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("nom", data.nom);
 
       navigate("/dashboard");
 
@@ -42,57 +43,31 @@ function Login() {
   };
 
   return (
-    <div className="d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div className="card shadow p-4" style={{ width: "380px" }}>
-
-        <h2 className="text-center text-success mb-2"><b>LUMEN</b></h2>
-        <p className="text-center text-muted">Connexion</p>
+    <div className="d-flex justify-content-center align-items-center vh-100">
+      <form onSubmit={handleSubmit} style={{ width: "300px" }}>
+        <h3>Login</h3>
 
         {error && <div className="alert alert-danger">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
+        <input
+          className="form-control mb-2"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-          <div className="mb-3">
-            <input
-              type="email"
-              className="form-control"
-              placeholder="Adresse email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+        <input
+          className="form-control mb-2"
+          type="password"
+          placeholder="Mot de passe"
+          value={motdepasse}
+          onChange={(e) => setMotdepasse(e.target.value)}
+        />
 
-          <div className="mb-3">
-            <input
-              type="password"
-              className="form-control"
-              placeholder="Mot de passe"
-              value={motdepasse}
-              onChange={(e) => setMotdepasse(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-primary w-100"
-            disabled={loading}
-          >
-            {loading ? "Connexion..." : "Se connecter"}
-          </button>
-        </form>
-
-        <hr />
-
-        <button
-          className="btn btn-success w-100"
-          onClick={() => navigate("/register")}
-        >
-          Créer un compte
+        <button className="btn btn-primary w-100" disabled={loading}>
+          {loading ? "Connexion..." : "Login"}
         </button>
-
-      </div>
+      </form>
     </div>
   );
 }

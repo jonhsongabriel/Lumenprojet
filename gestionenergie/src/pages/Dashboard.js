@@ -1,24 +1,32 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import API_URL from "../config/api";
+import MainLayout from "../layouts/MainLayout";
 
-export default function Dashboard() {
+function Dashboard() {
   const [projets, setProjets] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProjets = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
+        setError(null);
 
-        const res = await fetch(`${API_URL}/projets`);
+        // ✅ API SAFE (ne casse pas ton backend)
+        const url = `${API_URL}/projets`;
+
+        const res = await fetch(url);
 
         if (!res.ok) {
-          throw new Error("Erreur API: " + res.status);
+          throw new Error(`API error ${res.status}`);
         }
 
         const data = await res.json();
+
         setProjets(Array.isArray(data) ? data : []);
+
       } catch (err) {
         console.error(err);
         setError("Impossible de charger les projets");
@@ -27,188 +35,114 @@ export default function Dashboard() {
       }
     };
 
-    fetchProjets();
+    fetchData();
   }, []);
 
-  const getRandomStatus = () => {
-    const r = Math.random();
-    if (r > 0.7) return { label: "Alerte", className: "bg-danger" };
-    if (r > 0.4) return { label: "Maintenance", className: "bg-warning" };
-    return { label: "Opérationnel", className: "bg-success" };
-  };
-
   return (
-    <div className="d-flex">
+    <MainLayout>
 
-      {/* SIDEBAR */}
-      <div
-        className="bg-dark text-white p-3"
-        style={{ width: "250px", minHeight: "100vh" }}
-      >
-        <div className="text-center mb-4">
-          <img
-            src="/images/logo-lumen-vert.png"
-            alt="Lumen"
-            style={{ width: "100px" }}
-          />
-          <h5 className="mt-2">LUMEN</h5>
-        </div>
-
-        <ul className="nav flex-column">
-
-          <li className="nav-item mb-3">
-            <a href="/dashboard" className="text-white text-decoration-none">
-              Tableau de bord
-            </a>
-          </li>
-
-          <li className="nav-item mb-3">
-            <a href="#" className="text-white text-decoration-none">
-              Supervision
-            </a>
-          </li>
-
-          <li className="nav-item mb-3">
-            <a href="#" className="text-white text-decoration-none">
-              Historique
-            </a>
-          </li>
-
-          <li className="nav-item mb-3">
-            <a href="#" className="text-white text-decoration-none">
-              Configuration
-            </a>
-          </li>
-
-          <li className="nav-item mb-3">
-            <a href="#" className="text-white text-decoration-none">
-              Utilisateurs
-            </a>
-          </li>
-
-          <li className="nav-item mb-3">
-            <a href="#" className="text-white text-decoration-none">
-              Notifications
-            </a>
-          </li>
-
-          <li className="nav-item mt-4">
-            <a href="/ajouterprojet" className="btn btn-success w-100">
-              Ajouter projet
-            </a>
-          </li>
-        </ul>
+      {/* HEADER */}
+      <div className="mb-3">
+        <h3>📊 Tableau de bord énergie</h3>
+        <p className="text-muted">
+          Supervision des sites solaires en temps réel
+        </p>
       </div>
 
-      {/* MAIN */}
-      <div className="flex-grow-1 p-4 bg-light">
-
-        <h3 className="mb-4">Tableau de bord</h3>
-
-        {/* ERROR */}
-        {error && (
-          <div className="alert alert-danger">{error}</div>
-        )}
-
-        {/* STATS */}
-        <div className="row mb-4">
-
-          <div className="col-md-3">
-            <div className="card shadow p-3 text-center">
-              <h6>Sites totaux</h6>
-              <h3>{projets.length}</h3>
-            </div>
-          </div>
-
-          <div className="col-md-3">
-            <div className="card shadow p-3 text-center">
-              <h6>Production totale</h6>
-              <h3>{projets.length * 80} kW</h3>
-            </div>
-          </div>
-
-          <div className="col-md-3">
-            <div className="card shadow p-3 text-center">
-              <h6>Capacité installée</h6>
-              <h3>{projets.length * 150} kW</h3>
-            </div>
-          </div>
-
-          <div className="col-md-3">
-            <div className="card shadow p-3 text-center">
-              <h6>Alertes</h6>
-              <h3 className="text-danger">
-                {projets.length > 2 ? 2 : 0}
-              </h3>
-            </div>
-          </div>
-
+      {/* ERROR */}
+      {error && (
+        <div className="alert alert-danger">
+          {error}
         </div>
+      )}
 
-        {/* LISTE */}
-        <div className="row">
+      {/* LOADING */}
+      {loading && <p>Chargement...</p>}
 
-          {loading && (
-            <p>Chargement des projets...</p>
-          )}
+      {/* EMPTY STATE */}
+      {!loading && projets.length === 0 && (
+        <div className="alert alert-warning">
+          Aucun projet disponible
+        </div>
+      )}
 
-          {!loading && projets.length === 0 && (
-            <p>Aucun projet disponible</p>
-          )}
+      {/* GRID */}
+      <div className="row">
 
-          {projets.map((projet) => {
-            const status = getRandomStatus();
+        {projets.map((p) => (
+          <div className="col-12 col-sm-6 col-lg-4 mb-3" key={p.id}>
 
-            return (
-              <div className="col-md-4 mb-4" key={projet.id}>
+            <div className="card shadow-sm h-100 border-0">
 
-                <div className="card shadow-sm">
+              <div className="card-body">
 
-                  {projet.image && (
-                    <img
-                      src={projet.image}
-                      alt={projet.nom}
-                      className="card-img-top"
-                      style={{ height: "150px", objectFit: "cover" }}
-                    />
-                  )}
+                {/* TITLE */}
+                <h5 className="mb-2">
+                  ⚡ {p.nom || "Projet"}
+                </h5>
 
-                  <div className="card-body">
+                {/* DESCRIPTION */}
+                <p className="text-muted">
+                  {p.description || "Aucune description disponible"}
+                </p>
 
-                    <h5>{projet.nom}</h5>
+                {/* INFOS SYSTEME */}
+                <div className="small text-secondary mb-3">
 
-                    <p>
-                      {projet.description
-                        ? projet.description.slice(0, 60)
-                        : "Pas de description"}
-                      ...
-                    </p>
+                  <div>👤 Client : {p.client || "N/A"}</div>
+                  <div>⚙️ Statut : actif</div>
+                  <div>🔋 Monitoring : disponible</div>
 
-                    <p>
-                      <strong>Production:</strong>{" "}
-                      {Math.floor(Math.random() * 100)} kW
-                    </p>
+                </div>
 
-                    <p>
-                      <strong>Batterie:</strong>{" "}
-                      {Math.floor(Math.random() * 100)}%
-                    </p>
+                {/* ACTIONS */}
+                <div className="d-grid gap-2">
 
-                    <span className={`badge ${status.className}`}>
-                      {status.label}
-                    </span>
+                  {/* 📊 RAPPORT */}
+                  <Link
+                    to={`/rapport/${p.id}`}
+                    className="btn btn-primary btn-sm"
+                  >
+                    📊 Rapport & Production
+                  </Link>
 
-                  </div>
+                  {/* 📍 PLAN */}
+                  <Link
+                    to={`/plan?project=${p.id}`}
+                    className="btn btn-outline-success btn-sm"
+                  >
+                    📍 Localisation
+                  </Link>
+
+                  {/* 📈 ANALYSE (future graph page) */}
+                  <Link
+                    to={`/analyse/${p.id}`}
+                    className="btn btn-outline-dark btn-sm"
+                  >
+                    📈 Courbes & Analyse
+                  </Link>
+
+                  {/* 🚨 ALERTES */}
+                  <Link
+                    to={`/alertes/${p.id}`}
+                    className="btn btn-outline-danger btn-sm"
+                  >
+                    🚨 Alertes & Erreurs
+                  </Link>
 
                 </div>
 
               </div>
-            );
-          })}
 
-        </div>
+            </div>
+
+          </div>
+        ))}
 
       </div>
-    </div>
+
+    </MainLayout>
   );
 }
+
+export default Dashboard;

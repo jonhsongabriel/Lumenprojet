@@ -1,60 +1,44 @@
-const jwt = require('jsonwebtoken');
-module.exports = auth;
 const jwt = require("jsonwebtoken");
 
-
-//Authorisation de entrer
-function auth(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) return res.status(401).json({ message: "Token manquant" });
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: "Token invalide" });
-    req.user = user;
-    next();
-  });
-}
-
-//SEcurisation
-module.exports = function (req, res, next) {
-  const token = req.headers["authorization"];
-
-  if (!token) {
-    return res.status(403).json({ message: "Token manquant" });
-  }
-
-  try {
-    const decoded = jwt.verify(token.split(" ")[1], "SECRETKEY");
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: "Token invalide" });
-  }
-};
-
-
-// backend/middleware/auth.js
-const jwt = require("jsonwebtoken");
+const SECRET_KEY = process.env.SECRET_KEY || "lumen_secret_2026";
 
 const auth = (roles = []) => {
+  // sécurise si string est passé
+  if (typeof roles === "string") {
+    roles = [roles];
+  }
+
   return (req, res, next) => {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ message: "Token manquant" });
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(401).json({ message: "Token manquant" });
+    }
+
+    // format attendu: Bearer token
+    const parts = authHeader.split(" ");
+
+    if (parts.length !== 2 || parts[0] !== "Bearer") {
+      return res.status(401).json({ message: "Format token invalide" });
+    }
+
+    const token = parts[1];
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, SECRET_KEY);
+
       req.user = decoded;
 
-      // Si roles précisés, vérifier l'accès
-      if (roles.length && !roles.includes(decoded.role)) {
+      // 🔥 vérification des rôles
+      if (roles.length > 0 && !roles.includes(decoded.role)) {
         return res.status(403).json({ message: "Accès refusé" });
       }
 
       next();
+
     } catch (err) {
-      res.status(401).json({ message: "Token invalide" });
+      console.error("JWT ERROR:", err.message);
+      return res.status(401).json({ message: "Token invalide" });
     }
   };
 };

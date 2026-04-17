@@ -1,38 +1,60 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Header() {
+  const navigate = useNavigate();
+
   const token = localStorage.getItem("token");
   const role = localStorage.getItem("role");
 
   const logout = () => {
     localStorage.clear();
-    window.location.href = "/login";
+    navigate("/login");
   };
 
+  const canSeeProjets = ["admin", "ingenieur", "technicien"].includes(role);
+  const canSeeDemandes = ["admin", "ingenieur"].includes(role);
+
   return (
-    <nav className="navbar navbar-dark bg-dark px-3">
-      <Link className="navbar-brand" to="/">Lumen Platform</Link>
+    <nav className="navbar navbar-dark bg-dark px-3 flex-wrap">
+
+      {/* LOGO */}
+      <div className="mb-2">
+        <Link to="/dashboard">
+          <img
+            src="/images/logo-lumen-vert.png"
+            alt="logo"
+            style={{ height: "55px", cursor: "pointer" }}
+          />
+        </Link>
+      </div>
 
       {token && (
-        <>
-          <Link className="btn btn-outline-light me-2" to="/">Dashboard</Link>
+        <div className="d-flex flex-wrap gap-2 align-items-center">
 
-          {(role === "admin" || role === "ingenieur" || role === "technicien") && (
-            <Link className="btn btn-outline-light me-2" to="/projets">
+          <Link className="btn btn-outline-light btn-sm" to="/dashboard">
+            Dashboard
+          </Link>
+
+          {canSeeProjets && (
+            <Link className="btn btn-outline-light btn-sm" to="/projets">
               Projets
             </Link>
           )}
 
-          <Link className="btn btn-outline-light me-2" to="/demandes">
-            Demandes
-          </Link>
+          {canSeeDemandes && (
+            <Link className="btn btn-outline-light btn-sm" to="/demandes">
+              Demandes
+            </Link>
+          )}
 
-          <button className="btn btn-danger" onClick={logout}>
+          <button className="btn btn-danger btn-sm" onClick={logout}>
             Logout
           </button>
-        </>
+
+        </div>
       )}
+
     </nav>
   );
 }

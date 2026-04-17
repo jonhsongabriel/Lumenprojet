@@ -1,4 +1,3 @@
-// server.js
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
@@ -11,29 +10,78 @@ dotenv.config();
 
 const sequelize = require("./db");
 const Administrateur = require("./models/Administrateur");
-const Client = require("./models/Client");
 const Demande = require("./models/Demande");
-const User = require("./models/User"); // si tu veux garder User séparé
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const SECRET_KEY = process.env.SECRET_KEY || "lumen_secret_2026";
 
-// Middlewares
-app.use(cors());
+// =========================
+// LOGS
+// =========================
+app.use((req, res, next) => {
+  console.log("➡️", req.method, req.url);
+  next();
+});
+
+// =========================
+// BODY PARSER
+// =========================
 app.use(express.json());
+
+// =========================
+// CORS (DOIT ÊTRE AVANT CSP)
+// =========================
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+}));
+
+// =========================
+// CSP FIX (corrigé)
+// =========================
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; " +
+    "connect-src 'self' http://localhost:3000 http://localhost:5000 http://lumen-backend:5000; " +
+    "img-src 'self' data: blob:; " +
+    "media-src 'self' data: blob:; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "script-src 'self' 'unsafe-inline';"
+  );
+  next();
+});
+
+// =========================
+// STATIC
+// =========================
 app.use("/uploads", express.static("uploads"));
 app.use("/images", express.static("public/images"));
 
 // =========================
-// TEST BACKEND
+// VERIFY TOKEN SAFE
 // =========================
-app.get("/api/lumen/test", (req, res) => {
-  res.json({ message: "Backend OK" });
-});
+const verifyToken = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Token requis" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({ message: "Token invalide" });
+  }
+};
 
 // =========================
-// REGISTER ADMIN / CLIENT
+// REGISTER
 // =========================
 app.post("/api/lumen/register", async (req, res) => {
   try {
@@ -44,18 +92,20 @@ app.post("/api/lumen/register", async (req, res) => {
       return res.status(400).json({ message: "Email déjà utilisé" });
     }
 
-    const hashedPassword = await bcrypt.hash(motdepasse, 10);
+    const hashed = await bcrypt.hash(motdepasse, 10);
 
     const user = await Administrateur.create({
       nom,
       email,
       role: role || "client",
-      motdepasse: hashedPassword,
+      motdepasse: hashed,
     });
 
     res.status(201).json({ message: "Compte créé", user });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Erreur register" });
   }
 });
 
@@ -67,90 +117,96 @@ app.post("/api/lumen/login", async (req, res) => {
     const { email, motdepasse } = req.body;
 
     const user = await Administrateur.findOne({ where: { email } });
+
     if (!user) {
       return res.status(404).json({ message: "Utilisateur introuvable" });
     }
 
     const valid = await bcrypt.compare(motdepasse, user.motdepasse);
+
     if (!valid) {
       return res.status(401).json({ message: "Mot de passe incorrect" });
     }
 
-    const token = jwt.sign({ id: user.id, role: user.role }, SECRET_KEY, {
-      expiresIn: "1d",
-    });
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      SECRET_KEY,
+      { expiresIn: "1d" }
+    );
 
-    res.json({
-      token,
-      role: user.role,
-      nom: user.nom,
-    });
+    res.json({ token, role: user.role, nom: user.nom });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Erreur login" });
   }
 });
 
 // =========================
-// MIDDLEWARE TOKEN
-// =========================
-const verifyToken = (req, res, next) => {
-  const bearer = req.headers["authorization"];
-  if (!bearer) return res.status(403).json({ message: "Token requis" });
-
-  const token = bearer.split(" ")[1];
-
-  jwt.verify(token, SECRET_KEY, (err, decoded) => {
-    if (err) return res.status(401).json({ message: "Token invalide" });
-
-    req.user = decoded;
-    next();
-  });
-};
-
-// =========================
-// ROUTES PROTÉGÉES
+// DEMANDES
 // =========================
 app.get("/api/lumen/demande", verifyToken, async (req, res) => {
-  const demandes = await Demande.findAll();
-  res.json(demandes);
+  const data = await Demande.findAll();
+  res.json(data);
 });
 
 app.post("/api/lumen/demande", verifyToken, async (req, res) => {
-  const demande = await Demande.create(req.body);
-  res.json(demande);
+  const data = await Demande.create(req.body);
+  res.json(data);
 });
 
 // =========================
-// UPLOAD IMAGE
+// UPLOAD
 // =========================
 const storage = multer.diskStorage({
   destination: "uploads/",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
+  filename: (req, file, cb) =>
+    cb(null, Date.now() + path.extname(file.originalname)),
 });
+
 const upload = multer({ storage });
 
-app.post(
-  "/api/lumen/upload",
-  verifyToken,
-  upload.single("image"),
-  (req, res) => {
-    res.json({ imageUrl: `/uploads/${req.file.filename}` });
-  }
-);
+app.post("/api/lumen/upload", verifyToken, upload.single("image"), (req, res) => {
+  res.json({ imageUrl: `/uploads/${req.file.filename}` });
+});
 
 // =========================
-// START SERVER
+// PROJETS (TEMP OK)
 // =========================
-sequelize
-  .sync()
-  .then(() => {
-    console.log("DB synchronisée !");
-    app.listen(PORT, () => {
-      console.log("Serveur démarré sur le port " + PORT);
-    });
-  })
-  .catch((err) => {
-    console.error("Erreur DB:", err);
-  });
+app.get("/api/lumen/projets", (req, res) => {
+  res.json([]);
+});
+
+// =========================
+// RAPPORTS
+// =========================
+app.get("/api/lumen/rapports/:id", (req, res) => {
+  const data = {
+    1: { name: "Mahajanga", production: [300,320], consumption: [280,290], battery: [70,72] },
+    2: { name: "Antananarivo", production: [400,420], consumption: [380,390], battery: [60,62] },
+  };
+
+  const result = data[req.params.id];
+
+  if (!result) {
+    return res.status(404).json({ message: "Aucun rapport trouvé" });
+  }
+
+  res.json(result);
+});
+
+// =========================
+// ERROR HANDLER
+// =========================
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ message: "Erreur serveur" });
+});
+
+// =========================
+// START
+// =========================
+sequelize.sync().then(() => {
+  console.log("DB OK");
+  app.listen(PORT, () => console.log("Server " + PORT));
+});

@@ -7,36 +7,38 @@ const Administrateur = sequelize.define("Administrateur", {
     autoIncrement: true,
     primaryKey: true,
   },
+
   nom: {
     type: DataTypes.STRING,
     allowNull: false,
     validate: {
-      notEmpty: true, // ne permet pas un nom vide
+      notEmpty: true,
     },
   },
+
   email: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
     validate: {
-      isEmail: true, // vérifie que c’est bien un email
+      isEmail: true,
     },
   },
+
   role: {
-    type: DataTypes.ENUM("admin", "superadmin"), // plus sécurisé que string libre
+    type: DataTypes.ENUM("admin", "ingenieur", "technicien", "client"),
     allowNull: false,
-    defaultValue: "admin",
+    defaultValue: "client",
   },
+
   motdepasse: {
     type: DataTypes.STRING,
     allowNull: false,
-    validate: {
-      len: [8, 100], // longueur minimale sécurisée pour mot de passe
-    },
   },
+
 }, {
-  tableName: "administrateurs", // nom explicite de la table
-  timestamps: true, // créé createdAt et updatedAt
+  tableName: "administrateurs",
+  timestamps: true,
 });
 
 module.exports = Administrateur;

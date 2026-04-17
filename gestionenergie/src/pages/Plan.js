@@ -9,7 +9,7 @@ import axios from "axios";
 
 const containerStyle = {
   width: "100%",
-  height: "500px",
+  height: "600px",
 };
 
 const center = {
@@ -17,15 +17,14 @@ const center = {
   lng: 47.5079,
 };
 
-// URL API FastAPI (moniteur / carte)
-const API_FASTAPI =
+const API =
   process.env.NODE_ENV === "development"
     ? "http://localhost:8000"
-    : ""; // en prod via Nginx proxy
+    : "";
 
 function Plan() {
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "TA_CLE_API",
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || "",
     libraries: ["places"],
   });
 
@@ -35,12 +34,13 @@ function Plan() {
   const [searchBox, setSearchBox] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // LOAD DATA
   const loadSites = async () => {
     try {
-      const res = await axios.get(`${API_FASTAPI}/sites`);
+      const res = await axios.get(`${API}/sites`);
       setSites(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
-      console.error("Erreur chargement sites:", err);
+      console.error("Erreur sites:", err);
     }
   };
 
@@ -48,6 +48,7 @@ function Plan() {
     loadSites();
   }, []);
 
+  // CLICK MAP
   const handleClick = (e) => {
     setPosition({
       lat: e.latLng.lat(),
@@ -55,71 +56,90 @@ function Plan() {
     });
   };
 
+  // SAVE LOCATION
   const saveLocation = async () => {
-    if (!position || !nom) {
-      alert("Veuillez sélectionner un endroit et un nom");
+    if (!position || !nom.trim()) {
+      alert("Nom + position requis");
       return;
     }
 
     try {
       setLoading(true);
 
-      await axios.post(`${API_FASTAPI}/location`, {
+      await axios.post(`${API}/location`, {
         nom,
         latitude: position.lat,
         longitude: position.lng,
       });
 
-      alert("Coordonnées enregistrées !");
+      alert("Site enregistré !");
       setNom("");
       setPosition(null);
       loadSites();
+
     } catch (err) {
-      console.error("Erreur enregistrement:", err);
-      alert("Erreur lors de l'enregistrement");
+      console.error(err);
+      alert("Erreur enregistrement");
     } finally {
       setLoading(false);
     }
   };
 
+  // SEARCH
   const onLoadSearchBox = (ref) => setSearchBox(ref);
 
   const onPlacesChanged = () => {
-    const places = searchBox.getPlaces();
-    if (!places || places.length === 0) return;
+    if (!searchBox) return;
 
-    const place = places[0].geometry.location;
+    const places = searchBox.getPlaces();
+    if (!places?.length) return;
+
+    const loc = places[0]?.geometry?.location;
+    if (!loc) return;
+
     setPosition({
-      lat: place.lat(),
-      lng: place.lng(),
+      lat: loc.lat(),
+      lng: loc.lng(),
     });
   };
 
-  if (!isLoaded) return <div>Chargement carte...</div>;
+  if (!isLoaded) {
+    return <div className="text-center mt-5">Chargement carte...</div>;
+  }
 
   return (
-    <div className="container mt-3">
-      <h4>📍 Plan – Localisation du site solaire</h4>
+    <div className="container-fluid mt-3">
 
-      <input
-        type="text"
-        className="form-control mb-2"
-        placeholder="Nom du site solaire"
-        value={nom}
-        onChange={(e) => setNom(e.target.value)}
-      />
+      <h3 className="mb-3">📍 Plan des sites solaires</h3>
 
-      <StandaloneSearchBox
-        onLoad={onLoadSearchBox}
-        onPlacesChanged={onPlacesChanged}
-      >
-        <input
-          type="text"
-          placeholder="Chercher une adresse"
-          className="form-control mb-2"
-        />
-      </StandaloneSearchBox>
+      {/* INPUT */}
+      <div className="row mb-2">
+        <div className="col-md-6">
+          <input
+            className="form-control"
+            placeholder="Nom du site"
+            value={nom}
+            onChange={(e) => setNom(e.target.value)}
+          />
+        </div>
+      </div>
 
+      {/* SEARCH */}
+      <div className="row mb-2">
+        <div className="col-md-6">
+          <StandaloneSearchBox
+            onLoad={onLoadSearchBox}
+            onPlacesChanged={onPlacesChanged}
+          >
+            <input
+              className="form-control"
+              placeholder="Rechercher une adresse"
+            />
+          </StandaloneSearchBox>
+        </div>
+      </div>
+
+      {/* MAP */}
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}
@@ -128,31 +148,34 @@ function Plan() {
       >
         {position && <Marker position={position} />}
 
-        {sites.map((site, index) => (
+        {sites.map((s, i) => (
           <Marker
-            key={index}
+            key={i}
             position={{
-              lat: Number(site.latitude),
-              lng: Number(site.longitude),
+              lat: Number(s.latitude),
+              lng: Number(s.longitude),
             }}
-            title={site.nom}
+            title={s.nom}
           />
         ))}
       </GoogleMap>
 
+      {/* ACTION PANEL */}
       {position && (
-        <div className="mt-3">
-          <p><strong>Latitude :</strong> {position.lat}</p>
-          <p><strong>Longitude :</strong> {position.lng}</p>
+        <div className="card p-3 mt-3 shadow-sm">
+          <p><b>Latitude:</b> {position.lat}</p>
+          <p><b>Longitude:</b> {position.lng}</p>
+
           <button
-            className="btn btn-success"
+            className="btn btn-success w-100"
             onClick={saveLocation}
             disabled={loading}
           >
-            {loading ? "Enregistrement..." : "✅ Valider l’emplacement"}
+            {loading ? "Enregistrement..." : "Valider emplacement"}
           </button>
         </div>
       )}
+
     </div>
   );
 }

@@ -9,20 +9,23 @@ const Client = sequelize.define(
       autoIncrement: true,
       primaryKey: true,
     },
+
     nomclient: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notEmpty: true, // interdit nom vide
+        notEmpty: true,
       },
     },
+
     prenomclient: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        notEmpty: true, // interdit prénom vide
+        notEmpty: true,
       },
     },
+
     adresseclient: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -30,26 +33,27 @@ const Client = sequelize.define(
         notEmpty: true,
       },
     },
+
     contactclient: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
         notEmpty: true,
-        len: [8, 15], // longueur plausible pour un numéro de contact
       },
     },
+
     emailclient: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       validate: {
-        isEmail: true, // doit être un email valide
+        isEmail: true,
       },
     },
   },
   {
-    tableName: "clients", // nom explicite de la table
-    timestamps: true, // createdAt et updatedAt
+    tableName: "clients",
+    timestamps: true,
   }
 );
 
