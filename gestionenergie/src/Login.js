@@ -28,7 +28,7 @@ function Login() {
         throw new Error(data.message || "Erreur connexion");
       }
 
-      // 🔐 STORAGE STABLE
+      // 🔐 stockage sécurisé simple
       localStorage.setItem("token", data.token);
       localStorage.setItem("role", data.role);
       localStorage.setItem("nom", data.nom);
@@ -44,10 +44,15 @@ function Login() {
 
   return (
     <div className="d-flex justify-content-center align-items-center vh-100">
-      <form onSubmit={handleSubmit} style={{ width: "300px" }}>
-        <h3>Login</h3>
+      <form onSubmit={handleSubmit} style={{ width: "320px" }}>
 
-        {error && <div className="alert alert-danger">{error}</div>}
+        <h3 className="text-center mb-3">Login</h3>
+
+        {error && (
+          <div className="alert alert-danger">
+            {error}
+          </div>
+        )}
 
         <input
           className="form-control mb-2"
@@ -57,16 +62,33 @@ function Login() {
         />
 
         <input
-          className="form-control mb-2"
+          className="form-control mb-3"
           type="password"
           placeholder="Mot de passe"
           value={motdepasse}
           onChange={(e) => setMotdepasse(e.target.value)}
         />
 
-        <button className="btn btn-primary w-100" disabled={loading}>
+        <button
+          className="btn btn-primary w-100"
+          disabled={loading}
+        >
           {loading ? "Connexion..." : "Login"}
         </button>
+
+        {/* 🔥 REGISTER LINK */}
+        <div className="text-center mt-3">
+          <p className="mb-0">
+            Pas de compte ?{" "}
+            <span
+              style={{ color: "blue", cursor: "pointer" }}
+              onClick={() => navigate("/register")}
+            >
+              S'inscrire
+            </span>
+          </p>
+        </div>
+
       </form>
     </div>
   );
