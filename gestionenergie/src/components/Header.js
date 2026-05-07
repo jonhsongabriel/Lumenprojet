@@ -37,7 +37,8 @@ function Header() {
           </Link>
 
           {canSeeProjets && (
-            <Link className="btn btn-outline-light btn-sm" to="/projets">
+         
+         <Link className="btn btn-outline-light btn-sm" to="/projets">
               Projets
             </Link>
           )}

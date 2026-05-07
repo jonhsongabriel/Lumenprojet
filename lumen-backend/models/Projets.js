@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Projet = sequelize.define("Projet", {
-    
+
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -10,55 +10,29 @@ module.exports = (sequelize, DataTypes) => {
     nom: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
     },
 
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
+    description: DataTypes.TEXT,
+    client: DataTypes.STRING,
+    image: DataTypes.STRING,
 
-    client: {
+    // 🔥 NOUVELLE CONNEXION
+    serialNumber: {
       type: DataTypes.STRING,
-      allowNull: true,
-    },
-
-    image: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-
-    modeConnexion: {
-      type: DataTypes.ENUM("IP", "QR", "AUTRE"),
       allowNull: false,
     },
 
-    ip: {
+    devicePassword: {
       type: DataTypes.STRING,
-      allowNull: true,
+      allowNull: false,
     },
 
-    qrCode: {
-      type: DataTypes.STRING,
-      allowNull: true,
+    status: {
+      type: DataTypes.ENUM("CONNECTED", "FAILED"),
+      defaultValue: "FAILED",
     },
 
-    latitude: {
-      type: DataTypes.FLOAT,
-      allowNull: true,
-    },
-
-    longitude: {
-      type: DataTypes.FLOAT,
-      allowNull: true,
-    },
-
-    createdBy: {
-      type: DataTypes.INTEGER, // mieux que STRING
-      allowNull: true,
-    },
+    createdBy: DataTypes.INTEGER,
 
   }, {
     tableName: "projets",

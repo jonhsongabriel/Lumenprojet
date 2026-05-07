@@ -210,3 +210,42 @@ sequelize.sync().then(() => {
   console.log("DB OK");
   app.listen(PORT, () => console.log("Server " + PORT));
 });
+
+
+
+///Ajouter des api solar devise 
+app.post("/api/lumen/connect-device", async (req, res) => {
+  try {
+    const { serialNumber, devicePassword } = req.body;
+
+    console.log("🔌 DEVICE REQUEST:", serialNumber);
+
+    if (!serialNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "serialNumber requis",
+      });
+    }
+
+    const result = await connectToDevice(serialNumber);
+
+    return res.json({
+      success: result,
+      deviceId: serialNumber,
+    });
+
+  } catch (error) {
+    console.error("❌ connect-device error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur connect-device",
+    });
+  }
+});
+
+
+app.post("/api/lumen/connect-device", (req, res) => {
+  console.log("TEST OK");
+  res.json({ ok: true });
+});
