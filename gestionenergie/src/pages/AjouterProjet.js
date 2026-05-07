@@ -11,34 +11,47 @@ export default function ConnecterMoniteur() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
+  try {
+    const token = localStorage.getItem("token");
+
+    const payload = {
+      deviceSn: form.serialNumber,
+      devicePassword: form.devicePassword,
+    };
+
+    const res = await fetch(`${API_URL}/connect-device`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await res.text();
+
+    let data;
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_URL}/connect-device`,  {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Connexion échouée");
-
-      alert("✅ Moniteur connecté !");
-      
-      // 👉 redirection vers formulaire projet
-      navigate(`/ajouter-projet?deviceId=${data.deviceId}`);
-
+      data = JSON.parse(text);
     } catch (err) {
-      console.error(err);
-      alert(err.message);
+      console.error("❌ Backend pas JSON :", text);
+      throw new Error("Réponse serveur invalide");
     }
-  };
+
+    if (!res.ok) {
+      throw new Error(data.message || "Connexion échouée");
+    }
+
+    alert("✅ Moniteur connecté !");
+    navigate(`/ajouter-projet?deviceId=${data.deviceId}`);
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+};
 
   return (
     <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
