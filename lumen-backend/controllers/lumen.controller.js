@@ -1,22 +1,25 @@
 const connectDevice = async (req, res) => {
   try {
-    const { deviceSn, appId, appSecret } = req.body;
+    const { deviceSn, devicePassword } = req.body;
 
-    if (!deviceSn) {
+    const appId = process.env.SOLARMAN_APP_ID;
+    const appSecret = process.env.SOLARMAN_APP_SECRET;
+
+    if (!deviceSn || !devicePassword) {
       return res.status(400).json({
         success: false,
-        message: "deviceSn manquant"
+        message: "deviceSn ou devicePassword manquant"
       });
     }
 
     if (!appId || !appSecret) {
-      return res.status(400).json({
+      return res.status(500).json({
         success: false,
-        message: "Solarman credentials manquants"
+        message: "Configuration Solarman manquante (.env)"
       });
     }
 
-    // SIMULATION API SOLARMAN (évite crash)
+    // simulation connexion
     const response = {
       deviceSn,
       status: "connected",
@@ -38,6 +41,4 @@ const connectDevice = async (req, res) => {
   }
 };
 
-module.exports = {
-  connectDevice
-};
+module.exports = { connectDevice };
