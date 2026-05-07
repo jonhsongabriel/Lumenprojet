@@ -5,6 +5,7 @@ const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const path = require("path");
 const dotenv = require("dotenv");
+const { connectToDevice } = require("./services/solarmanService");
 
 dotenv.config();
 
@@ -245,7 +246,3 @@ app.post("/api/lumen/connect-device", async (req, res) => {
 });
 
 
-app.post("/api/lumen/connect-device", (req, res) => {
-  console.log("TEST OK");
-  res.json({ ok: true });
-});
