@@ -1,14 +1,48 @@
 const express = require("express");
 const router = express.Router();
 
+const { Projet } = require("../models");
 const { connectDevice } = require("../controllers/lumen.controller");
 
-// CONNECT DEVICE
 router.post("/connect-device", connectDevice);
 
-// PROJETS (IMPORTANT)
-router.get("/projets", (req, res) => {
-  res.json([]);
+
+router.post("/projets", async (req, res) => {
+  try {
+
+    const projet = await Projet.create({
+      nom: req.body.nom,
+      description: req.body.description,
+      client: req.body.client,
+      serialNumber: req.body.serialNumber,
+      devicePassword: req.body.devicePassword,
+      createdBy: req.body.createdBy || null
+    });
+
+    res.json(projet);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur création projet" });
+  }
 });
+
+
+router.get("/projets", async (req, res) => {
+  try {
+
+    const projets = await Projet.findAll({
+      order: [["createdAt", "DESC"]]
+    });
+
+    res.json(projets);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Erreur récupération projets" });
+  }
+});
+
+
 
 module.exports = router;
