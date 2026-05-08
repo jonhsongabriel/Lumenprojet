@@ -3,6 +3,8 @@ const sequelize = require("../db");
 
 const db = {};
 
+//Correction 
+
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
