@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-  const Projets = sequelize.define("Projets", {
+  const Projet = sequelize.define("Projet", {
 
     id: {
       type: DataTypes.INTEGER,
@@ -16,7 +16,6 @@ module.exports = (sequelize, DataTypes) => {
     client: DataTypes.STRING,
     image: DataTypes.STRING,
 
-    // 🔥 NOUVELLE CONNEXION
     serialNumber: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -39,5 +38,5 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: true,
   });
 
-  return Projets;
+  return Projet;
 };
