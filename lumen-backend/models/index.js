@@ -6,10 +6,9 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-// ✅ CORRECTION ICI
+// ✅ MODELES
 db.Projet = require("./Projet")(sequelize, Sequelize);
 
-// autres modèles
 db.Administrateur = require("./Administrateur")(sequelize, Sequelize);
 db.Client = require("./Client")(sequelize, Sequelize);
 db.Demande = require("./Demande")(sequelize, Sequelize);
