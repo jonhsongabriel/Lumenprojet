@@ -60,6 +60,7 @@ export default function ConnecterMoniteur() {
       alert(err.message || "Erreur connexion");
 
     }
+    console.log("API_URL =", API_URL);
   };
 
   return (
