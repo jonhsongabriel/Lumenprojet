@@ -8,8 +8,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ✅ IMPORT DB
+const db = require("./models");
+
+// ✅ SYNCHRONISATION TABLES
+db.sequelize.sync({ alter: true })
+  .then(() => {
+    console.log("✅ Tables synchronisées");
+  })
+  .catch((err) => {
+    console.error("❌ Erreur sync :", err);
+  });
+
 // routes
 const lumenRoutes = require("./routes/lumen.routes");
+
 app.use("/api/lumen", lumenRoutes);
 
 app.get("/", (req, res) => {
