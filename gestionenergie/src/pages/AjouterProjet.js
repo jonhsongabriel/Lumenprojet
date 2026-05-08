@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import API_URL from "../config/api";
 
 export default function ConnecterMoniteur() {
+
   const [form, setForm] = useState({
     serialNumber: "",
     devicePassword: "",
@@ -11,61 +12,89 @@ export default function ConnecterMoniteur() {
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  try {
-    const token = localStorage.getItem("token");
-
-    const payload = {
-      deviceSn: form.serialNumber,
-      devicePassword: form.devicePassword,
-    };
-
-    const res = await fetch(`${API_URL}/connect-device`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const text = await res.text();
-
-    let data;
     try {
-      data = JSON.parse(text);
+
+      const token = localStorage.getItem("token");
+
+      // ✅ IMPORTANT : backend attend serialNumber
+      const payload = {
+        serialNumber: form.serialNumber,
+        devicePassword: form.devicePassword,
+      };
+
+      const res = await fetch(`${API_URL}/connect-device`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      // ✅ lecture sécurisée
+      const text = await res.text();
+
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        console.error("❌ Backend non JSON :", text);
+        throw new Error("Réponse serveur invalide");
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || "Connexion échouée");
+      }
+
+      alert("✅ Moniteur connecté !");
+
+      navigate(`/ajouter-projet?deviceId=${data.deviceId}`);
+
     } catch (err) {
-      console.error("❌ Backend pas JSON :", text);
-      throw new Error("Réponse serveur invalide");
+
+      console.error("❌ Connect device:", err);
+
+      alert(err.message || "Erreur connexion");
+
     }
-
-    if (!res.ok) {
-      throw new Error(data.message || "Connexion échouée");
-    }
-
-    alert("✅ Moniteur connecté !");
-    navigate(`/ajouter-projet?deviceId=${data.deviceId}`);
-
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  }
-};
+  };
 
   return (
-    <div className="container d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
-      <div className="card shadow p-4 w-100" style={{ maxWidth: "400px", borderRadius: "15px" }}>
+    <div
+      className="container d-flex justify-content-center align-items-center"
+      style={{ minHeight: "80vh" }}
+    >
+      <div
+        className="card shadow p-4 w-100"
+        style={{
+          maxWidth: "400px",
+          borderRadius: "15px",
+        }}
+      >
 
-        <h3 className="text-center mb-4">🔐 Connecter un moniteur</h3>
+        <h3 className="text-center mb-4">
+          🔐 Connecter un moniteur
+        </h3>
 
-        <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+        <form
+          onSubmit={handleSubmit}
+          className="d-flex flex-column gap-3"
+        >
 
           <input
+            type="text"
             className="form-control"
             placeholder="Numéro de série / ID"
             value={form.serialNumber}
-            onChange={(e) => setForm({ ...form, serialNumber: e.target.value })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                serialNumber: e.target.value,
+              })
+            }
             required
           />
 
@@ -74,11 +103,19 @@ export default function ConnecterMoniteur() {
             className="form-control"
             placeholder="Mot de passe"
             value={form.devicePassword}
-            onChange={(e) => setForm({ ...form, devicePassword: e.target.value })}
+            onChange={(e) =>
+              setForm({
+                ...form,
+                devicePassword: e.target.value,
+              })
+            }
             required
           />
 
-          <button className="btn btn-primary w-100">
+          <button
+            type="submit"
+            className="btn btn-primary w-100"
+          >
             🔌 Se connecter
           </button>
 

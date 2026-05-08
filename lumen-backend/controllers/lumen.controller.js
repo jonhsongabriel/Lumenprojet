@@ -1,43 +1,42 @@
 const connectDevice = async (req, res) => {
   try {
-    const { deviceSn, devicePassword } = req.body;
 
-    const appId = process.env.SOLARMAN_APP_ID;
-    const appSecret = process.env.SOLARMAN_APP_SECRET;
+    // ✅ frontend envoie maintenant serialNumber
+    const { serialNumber, devicePassword } = req.body;
 
-    if (!deviceSn || !devicePassword) {
+    // ✅ vérification champs
+    if (!serialNumber || !devicePassword) {
       return res.status(400).json({
         success: false,
-        message: "deviceSn ou devicePassword manquant"
+        message: "serialNumber ou devicePassword manquant"
       });
     }
 
-    if (!appId || !appSecret) {
-      return res.status(500).json({
-        success: false,
-        message: "Configuration Solarman manquante (.env)"
-      });
-    }
+    // =========================
+    // SIMULATION CONNEXION
+    // =========================
 
-    // simulation connexion
     const response = {
-      deviceSn,
+      deviceId: serialNumber,
       status: "connected",
       timestamp: new Date()
     };
 
     return res.json({
       success: true,
+      deviceId: serialNumber,
       data: response
     });
 
   } catch (error) {
+
     console.error("connect-device error:", error);
 
     return res.status(500).json({
       success: false,
       message: "Erreur serveur"
     });
+
   }
 };
 

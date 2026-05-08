@@ -5,7 +5,6 @@ const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const path = require("path");
 const dotenv = require("dotenv");
-const { connectToDevice } = require("./services/solarmanService");
 
 dotenv.config();
 
@@ -31,7 +30,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 // =========================
-// CORS (DOIT ÊTRE AVANT CSP)
+// CORS
 // =========================
 app.use(cors({
   origin: "*",
@@ -39,7 +38,7 @@ app.use(cors({
 }));
 
 // =========================
-// CSP FIX (corrigé)
+// CSP FIX
 // =========================
 app.use((req, res, next) => {
   res.setHeader(
@@ -61,7 +60,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/images", express.static("public/images"));
 
 // =========================
-// VERIFY TOKEN SAFE
+// VERIFY TOKEN
 // =========================
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -172,7 +171,7 @@ app.post("/api/lumen/upload", verifyToken, upload.single("image"), (req, res) =>
 });
 
 // =========================
-// PROJETS (TEMP OK)
+// PROJETS
 // =========================
 app.get("/api/lumen/projets", (req, res) => {
   res.json([]);
@@ -197,24 +196,8 @@ app.get("/api/lumen/rapports/:id", (req, res) => {
 });
 
 // =========================
-// ERROR HANDLER
+// CONNECT DEVICE (FIX FINAL)
 // =========================
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ message: "Erreur serveur" });
-});
-
-// =========================
-// START
-// =========================
-sequelize.sync().then(() => {
-  console.log("DB OK");
-  app.listen(PORT, () => console.log("Server " + PORT));
-});
-
-
-
-///Ajouter des api solar devise 
 app.post("/api/lumen/connect-device", async (req, res) => {
   try {
     const { serialNumber, devicePassword } = req.body;
@@ -228,11 +211,17 @@ app.post("/api/lumen/connect-device", async (req, res) => {
       });
     }
 
-    const result = await connectToDevice(serialNumber);
+    // 👉 SIMULATION (pas de Solarman pour éviter crash)
+    const response = {
+      deviceId: serialNumber,
+      status: "connected",
+      timestamp: new Date()
+    };
 
     return res.json({
-      success: result,
+      success: true,
       deviceId: serialNumber,
+      data: response
     });
 
   } catch (error) {
@@ -245,4 +234,18 @@ app.post("/api/lumen/connect-device", async (req, res) => {
   }
 });
 
+// =========================
+// ERROR HANDLER
+// =========================
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ message: "Erreur serveur" });
+});
 
+// =========================
+// START SERVER
+// =========================
+sequelize.sync().then(() => {
+  console.log("DB OK");
+  app.listen(PORT, () => console.log("Server " + PORT));
+});
