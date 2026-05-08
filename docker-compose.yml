@@ -38,16 +38,6 @@ services:
     networks:
       - lumen-network
 
-  gestionenergie:
-    build: ./gestionenergie
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./gestionenergie:/app
-    command: npm start
-    networks:
-      - lumen-network
-
 networks:
   lumen-network:
 

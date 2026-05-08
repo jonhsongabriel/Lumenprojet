@@ -8,11 +8,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ROUTES
+// routes
 const lumenRoutes = require("./routes/lumen.routes");
 app.use("/api/lumen", lumenRoutes);
 
-// TEST API
 app.get("/", (req, res) => {
   res.json({ status: "API Lumen running" });
 });
