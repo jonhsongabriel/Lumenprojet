@@ -8,27 +8,41 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ IMPORT DB
+// =======================
+// DATABASE
+// =======================
 const db = require("./models");
 
-// ✅ SYNCHRONISATION TABLES
-db.sequelize.sync({ alter: true })
-  .then(() => {
-    console.log("✅ Tables synchronisées");
-  })
-  .catch((err) => {
-    console.error("❌ Erreur sync :", err);
-  });
-//changement actuel 
-// routes
-const lumenRoutes = require("./routes/lumen.routes");
+// 🔥 IMPORTANT: sync AVANT routes (plus stable)
+const initDB = async () => {
+  try {
+    await db.sequelize.authenticate();
+    console.log("✅ DB connectée avec succès");
 
+    await db.sequelize.sync({ alter: true });
+    console.log("✅ Tables synchronisées");
+  } catch (err) {
+    console.error("❌ Erreur DB init :", err);
+  }
+};
+
+// lancer DB
+initDB();
+
+// =======================
+// ROUTES
+// =======================
+const lumenRoutes = require("./routes/lumen.routes");
 app.use("/api/lumen", lumenRoutes);
 
+// health check
 app.get("/", (req, res) => {
   res.json({ status: "API Lumen running" });
 });
 
+// =======================
+// START SERVER
+// =======================
 const PORT = process.env.PORT || 9000;
 
 app.listen(PORT, "0.0.0.0", () => {
