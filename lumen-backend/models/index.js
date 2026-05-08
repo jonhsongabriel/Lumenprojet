@@ -7,6 +7,6 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // modèle Projet
-db.Projet = require("./Projet")(sequelize, Sequelize);
+db.Projet = require("./Projets")(sequelize, Sequelize);
 
 module.exports = db;
