@@ -7,7 +7,7 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 // ✅ CORRECTION ICI
-db.Projet = require("./Projets")(sequelize, Sequelize);
+db.Projet = require("./Projet")(sequelize, Sequelize);
 
 // autres modèles
 db.Administrateur = require("./Administrateur")(sequelize, Sequelize);
