@@ -19,7 +19,7 @@ db.sequelize.sync({ alter: true })
   .catch((err) => {
     console.error("❌ Erreur sync :", err);
   });
-
+//changement actuel 
 // routes
 const lumenRoutes = require("./routes/lumen.routes");
 
