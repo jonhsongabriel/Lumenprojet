@@ -7,5 +7,5 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 //modele actule pour tset
 // modèles
-db.Projet = require("./Projet")(sequelize, Sequelize.DataTypes);
+db.Projets = require("./Projets")(sequelize, Sequelize.DataTypes);
 module.exports = db;
