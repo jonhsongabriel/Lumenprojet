@@ -1,15 +1,17 @@
 const express = require("express");
 const router = express.Router();
 
-const { Projet } = require("../models");
+const db = require("../models");
+const Projet = db.Projet;
+
 const { connectDevice } = require("../controllers/lumen.controller");
 
+// CONNECT DEVICE
 router.post("/connect-device", connectDevice);
 
-
+// CREATE PROJET
 router.post("/projets", async (req, res) => {
   try {
-
     const projet = await Projet.create({
       nom: req.body.nom,
       description: req.body.description,
@@ -27,10 +29,9 @@ router.post("/projets", async (req, res) => {
   }
 });
 
-
+// GET PROJETS
 router.get("/projets", async (req, res) => {
   try {
-
     const projets = await Projet.findAll({
       order: [["createdAt", "DESC"]]
     });
@@ -42,7 +43,5 @@ router.get("/projets", async (req, res) => {
     res.status(500).json({ message: "Erreur récupération projets" });
   }
 });
-
-
 
 module.exports = router;
