@@ -3,17 +3,14 @@ const sequelize = require("../db");
 
 const db = {};
 
-//Correction 
-
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-// ✅ MODELES
-db.Projet = require("./Projet")(sequelize, Sequelize);
-
-db.Administrateur = require("./Administrateur")(sequelize, Sequelize);
-db.Client = require("./Client")(sequelize, Sequelize);
-db.Demande = require("./Demande")(sequelize, Sequelize);
-db.User = require("./User")(sequelize, Sequelize);
+// modèles
+db.Projet = require("./Projet")(sequelize, Sequelize.DataTypes);
+db.Administrateur = require("./Administrateur")(sequelize, Sequelize.DataTypes);
+db.Client = require("./Client")(sequelize, Sequelize.DataTypes);
+db.Demande = require("./Demande")(sequelize, Sequelize.DataTypes);
+db.User = require("./User")(sequelize, Sequelize.DataTypes);
 
 module.exports = db;
