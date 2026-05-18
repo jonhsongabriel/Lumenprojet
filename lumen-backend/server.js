@@ -266,3 +266,25 @@ sequelize.sync().then(() => {
   console.log("DB OK");
   app.listen(PORT, () => console.log("Server " + PORT));
 });
+
+
+app.get("/api/lumen/projets", async (req, res) => {
+  try {
+    const db = require("./models");
+
+    console.log("🔥 db.Projet =", db.Projet);
+
+    const projets = await db.Projet.findAll();
+
+    res.json(projets);
+
+  } catch (err) {
+    console.error("❌ PROJETS ERROR FULL:", err);
+
+    res.status(500).json({
+      message: "Erreur récupération projets",
+      error: err.message,
+      stack: err.stack
+    });
+  }
+});
