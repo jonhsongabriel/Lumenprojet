@@ -6,7 +6,11 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.Client = require("./Client")(sequelize, Sequelize.DataTypes);
-db.Projet = require("./Projet")(sequelize, Sequelize.DataTypes);
+// ❌ NE PAS APPELER COMME UNE FONCTION
+db.Client = require("./Client");
+db.Projet = require("./Projets");
+db.Administrateur = require("./Administrateur");
+db.Demande = require("./Demande");
+db.User = require("./User");
 
 module.exports = db;
