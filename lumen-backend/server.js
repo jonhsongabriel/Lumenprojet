@@ -16,6 +16,29 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const SECRET_KEY = process.env.SECRET_KEY || "lumen_secret_2026";
 
+
+
+const sequelize = require("./db");
+
+const projetRoutes = require("./routes/projets");
+const authRoutes = require("./routes/auth");
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// ROUTES
+app.use("/api/lumen/projets", projetRoutes);
+app.use("/api/lumen", authRoutes);
+
+const PORT = process.env.PORT || 5000;
+
+sequelize.sync().then(() => {
+  console.log("DB OK");
+  app.listen(PORT, () => console.log("Server running on", PORT));
+});
+
 // =========================
 // LOGS
 // =========================
@@ -170,12 +193,6 @@ app.post("/api/lumen/upload", verifyToken, upload.single("image"), (req, res) =>
   res.json({ imageUrl: `/uploads/${req.file.filename}` });
 });
 
-// =========================
-// PROJETS
-// =========================
-app.get("/api/lumen/projets", (req, res) => {
-  res.json([]);
-});
 
 // =========================
 // RAPPORTS

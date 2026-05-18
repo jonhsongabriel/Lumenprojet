@@ -1,42 +1,18 @@
 module.exports = (sequelize, DataTypes) => {
-  const Projet = sequelize.define("Projets", {
-
+  return sequelize.define("Projet", {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
-
-    nom: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
+    nom: DataTypes.STRING,
     description: DataTypes.TEXT,
     client: DataTypes.STRING,
-    image: DataTypes.STRING,
-
-    serialNumber: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    devicePassword: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-
-    status: {
-      type: DataTypes.ENUM("CONNECTED", "FAILED"),
-      defaultValue: "FAILED",
-    },
-
-    createdBy: DataTypes.INTEGER,
-
+    serialNumber: DataTypes.STRING,
+    devicePassword: DataTypes.STRING,
+    status: DataTypes.STRING,
   }, {
     tableName: "projets",
     timestamps: true,
   });
-
-  return Projet;
 };
