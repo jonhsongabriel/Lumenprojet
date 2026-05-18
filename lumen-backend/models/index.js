@@ -6,13 +6,10 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-// ✅ BON NOM (IMPORTANT)
-db.Projet = require("./Projets")(sequelize, Sequelize);
-
-// autres modèles
-db.Administrateur = require("./Administrateur")(sequelize, Sequelize);
-//db.Client = require("./Client")(sequelize, Sequelize);
-db.Demande = require("./Demande")(sequelize, Sequelize);
-db.User = require("./User")(sequelize, Sequelize);
+db.Projet = require("./Projets");
+db.Administrateur = require("./Administrateur");
+db.Client = require("./Client");
+db.Demande = require("./Demande");
+db.User = require("./User");
 
 module.exports = db;
