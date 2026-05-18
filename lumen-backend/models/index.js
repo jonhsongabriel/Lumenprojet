@@ -11,7 +11,7 @@ db.Projet = require("./Projets")(sequelize, Sequelize);
 
 // autres modèles
 db.Administrateur = require("./Administrateur")(sequelize, Sequelize);
-db.Client = require("./Client")(sequelize, Sequelize);
+//db.Client = require("./Client")(sequelize, Sequelize);
 db.Demande = require("./Demande")(sequelize, Sequelize);
 db.User = require("./User")(sequelize, Sequelize);
 
