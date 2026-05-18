@@ -6,12 +6,11 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.Projet = require("./Projets")(sequelize, Sequelize.DataTypes);
-db.Administrateur = require("./Administrateur")(sequelize, Sequelize.DataTypes);
-db.Client = require("./Client")(sequelize, Sequelize.DataTypes);
-db.Demande = require("./Demande")(sequelize, Sequelize.DataTypes);
-db.User = require("./User")(sequelize, Sequelize.DataTypes);
-console.log("Client:", typeof require("./Client"));
-console.log("Projet:", typeof require("./Projets"));
+// ✅ BON NOM (IMPORTANT)
+db.Projet = require("./Projets");
+db.Administrateur = require("./Administrateur");
+//db.Client = require("./Client");
+db.Demande = require("./Demande");
+db.User = require("./User");
 
 module.exports = db;
