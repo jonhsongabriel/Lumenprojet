@@ -3,17 +3,23 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
+const db = require("./models");
+const lumenRoutes = require("./routes/lumen.routes");
+const solarmanMock = require("./routes/solarman.mock");
+
 const app = express();
 
+const PORT = process.env.PORT || 5000;
+
+// =======================
+// MIDDLEWARES
+// =======================
 app.use(cors());
 app.use(express.json());
 
 // =======================
-// DATABASE
+// DATABASE INIT
 // =======================
-const db = require("./models");
-
-// 🔥 IMPORTANT: sync AVANT routes (plus stable)
 const initDB = async () => {
   try {
     await db.sequelize.authenticate();
@@ -21,21 +27,23 @@ const initDB = async () => {
 
     await db.sequelize.sync({ alter: true });
     console.log("✅ Tables synchronisées");
+
   } catch (err) {
     console.error("❌ Erreur DB init :", err);
   }
 };
 
-// lancer DB
 initDB();
 
 // =======================
 // ROUTES
 // =======================
-const lumenRoutes = require("./routes/lumen.routes");
 app.use("/api/lumen", lumenRoutes);
+app.use("/api/solarman", solarmanMock);
 
-// health check
+// =======================
+// HEALTH CHECK
+// =======================
 app.get("/", (req, res) => {
   res.json({ status: "API Lumen running" });
 });
@@ -43,23 +51,6 @@ app.get("/", (req, res) => {
 // =======================
 // START SERVER
 // =======================
-const PORT = process.env.PORT || 9000;
-
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
-});
-
-
-// =======================
-// ROUTES
-// =======================
-const lumenRoutes = require("./routes/lumen.routes");
-app.use("/api/lumen", lumenRoutes);
-
-const solarmanMock = require("./routes/solarman.mock");
-app.use("/api/solarman", solarmanMock);
-
-// health check
-app.get("/", (req, res) => {
-  res.json({ status: "API Lumen running" });
 });
