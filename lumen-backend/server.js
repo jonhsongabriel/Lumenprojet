@@ -140,16 +140,24 @@ app.get("/api/lumen/rapports/:id", (req, res) => {
 // =========================
 app.get("/api/lumen/projets", async (req, res) => {
   try {
+    console.log("➡️ GET /projets appelé");
+
     const projets = await db.Projet.findAll();
+
+    console.log("RESULT:", projets);
+
     res.json(projets);
+
   } catch (err) {
+    console.error("🔥 ERREUR PROJETS FULL:", err);
+
     res.status(500).json({
       message: "Erreur récupération projets",
       error: err.message,
+      stack: err.stack
     });
   }
 });
-
 // =========================
 // CONNECT DEVICE
 // =========================
