@@ -48,3 +48,18 @@ const PORT = process.env.PORT || 9000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
+
+// =======================
+// ROUTES
+// =======================
+const lumenRoutes = require("./routes/lumen.routes");
+app.use("/api/lumen", lumenRoutes);
+
+const solarmanMock = require("./routes/solarman.mock");
+app.use("/api/solarman", solarmanMock);
+
+// health check
+app.get("/", (req, res) => {
+  res.json({ status: "API Lumen running" });
+});

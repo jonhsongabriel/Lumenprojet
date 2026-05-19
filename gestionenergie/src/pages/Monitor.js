@@ -1,88 +1,116 @@
 import React, { useEffect, useState } from "react";
 
 function Monitor() {
+
   const [data, setData] = useState({
-    tension: 0,
-    courant: 0,
-    puissance: 0,
+    voltage: 0,
+    current: 0,
+    power: 0,
   });
 
   const [historique, setHistorique] = useState([]);
 
-  const API = "http://localhost:8000";
+  // 🔥 IMPORTANT : ton backend Lumen
+  const API = "http://localhost:5000/api";
 
+  // =========================
+  // LIVE DATA SOLARMAN
+  // =========================
   useEffect(() => {
+
     const fetchData = async () => {
       try {
-        const res = await fetch(`${API}/donnees-solaire`);
+        const res = await fetch(`${API}/solarman/inverter/data`);
         const json = await res.json();
-        setData(json);
+
+        if (json?.data) {
+          setData({
+            voltage: json.data.voltage,
+            current: json.data.current,
+            power: json.data.power,
+          });
+
+          // 🔥 ajout historique local temps réel
+          setHistorique((old) => [
+            ...old.slice(-15),
+            {
+              id: Date.now(),
+              timestamp: new Date().toLocaleTimeString(),
+              tension: json.data.voltage,
+              courant: json.data.current,
+              puissance: json.data.power,
+            }
+          ]);
+        }
+
       } catch (err) {
-        console.error(err);
+        console.error("API error:", err);
       }
     };
 
     fetchData();
 
     const interval = setInterval(fetchData, 5000);
+
     return () => clearInterval(interval);
+
   }, []);
 
-  useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const res = await fetch(`${API}/historique`);
-        const data = await res.json();
-        setHistorique(data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchHistory();
-  }, []);
-
+  // =========================
+  // UI
+  // =========================
   return (
-    <div>
-      <h2>📊 Monitor Panneau Solaire</h2>
+    <div style={{ padding: "20px" }}>
 
+      <h2>📊 Monitor Solaire (SOLARMAN SIM)</h2>
+
+      {/* ================= CARDS ================= */}
       <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
-        <Card title="Tension" value={`${data.tension} V`} />
-        <Card title="Courant" value={`${data.courant} A`} />
-        <Card title="Puissance" value={`${data.puissance} W`} />
+
+        <Card title="Tension" value={`${data.voltage} V`} />
+        <Card title="Courant" value={`${data.current} A`} />
+        <Card title="Puissance" value={`${data.power} W`} />
+
       </div>
 
-      <h3 style={{ marginTop: "30px" }}>Historique</h3>
+      {/* ================= HISTORY ================= */}
+      <h3 style={{ marginTop: "30px" }}>📈 Historique temps réel</h3>
 
-      <table className="table">
+      <table className="table" style={{ marginTop: "10px" }}>
         <thead>
           <tr>
-            <th>Date</th>
+            <th>Heure</th>
             <th>Tension</th>
             <th>Courant</th>
             <th>Puissance</th>
           </tr>
         </thead>
+
         <tbody>
           {historique.map((h) => (
             <tr key={h.id}>
               <td>{h.timestamp}</td>
-              <td>{h.tension}</td>
-              <td>{h.courant}</td>
-              <td>{h.puissance}</td>
+              <td>{h.tension} V</td>
+              <td>{h.courant} A</td>
+              <td>{h.puissance} W</td>
             </tr>
           ))}
         </tbody>
+
       </table>
+
     </div>
   );
 }
 
+// =========================
+// CARD COMPONENT
+// =========================
 function Card({ title, value }) {
   return (
     <div style={card}>
       <h4>{title}</h4>
-      <p>{value}</p>
+      <p style={{ fontSize: "20px", fontWeight: "bold" }}>{value}</p>
     </div>
   );
 }
@@ -92,6 +120,8 @@ const card = {
   background: "#fff",
   borderRadius: "10px",
   boxShadow: "0 0 10px rgba(0,0,0,0.1)",
+  minWidth: "150px",
+  textAlign: "center"
 };
 
 export default Monitor;

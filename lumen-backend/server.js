@@ -136,14 +136,13 @@ app.get("/api/lumen/rapports/:id", (req, res) => {
 });
 
 // =========================
-// PROJETS (FIX FINAL)
+// PROJETS
 // =========================
 app.get("/api/lumen/projets", async (req, res) => {
   try {
     const projets = await db.Projet.findAll();
     res.json(projets);
   } catch (err) {
-    console.error(err);
     res.status(500).json({
       message: "Erreur récupération projets",
       error: err.message,
@@ -168,11 +167,51 @@ app.post("/api/lumen/connect-device", async (req, res) => {
 });
 
 // =========================
-// START SERVER (UNE SEULE FOIS)
+// ⚡ SOLARMAN MOCK API (AJOUTÉ)
+// =========================
+
+// 🔌 Inverter data
+app.get("/api/solarman/inverter/data", (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      deviceId: "SIM-INV-001",
+      power: Math.floor(900 + Math.random() * 900),
+      energyToday: Number((Math.random() * 10).toFixed(2)),
+      totalEnergy: Number((1500 + Math.random() * 50).toFixed(2)),
+      voltage: 230,
+      current: 5.2,
+      status: "online",
+      timestamp: new Date()
+    }
+  });
+});
+
+// 🔌 Devices
+app.get("/api/solarman/devices", (req, res) => {
+  res.json({
+    success: true,
+    devices: [
+      {
+        id: "SIM-INV-001",
+        name: "Onduleur Maison",
+        status: "online"
+      },
+      {
+        id: "SIM-INV-002",
+        name: "Onduleur Jardin",
+        status: "offline"
+      }
+    ]
+  });
+});
+
+// =========================
+// START SERVER
 // =========================
 sequelize.sync().then(() => {
   console.log("DB OK");
   app.listen(PORT, () => {
-    console.log("Server running on", PORT);
+    console.log("🚀 Server running on port", PORT);
   });
 });
