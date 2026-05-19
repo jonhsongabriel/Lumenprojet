@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const axios = require("axios");
 
 const db = require("./models");
 
@@ -10,9 +11,6 @@ const solarmanMock = require("./routes/solarman.mock");
 
 const app = express();
 
-// =======================
-// CONFIG
-// =======================
 const PORT = process.env.PORT || 9000;
 
 // =======================
@@ -21,24 +19,24 @@ const PORT = process.env.PORT || 9000;
 app.use(cors());
 app.use(express.json());
 
-// LOG REQUEST (debug utile)
+// LOG REQUEST
 app.use((req, res, next) => {
   console.log("➡️", req.method, req.url);
   next();
 });
 
 // =======================
-// DATABASE INIT
+// DATABASE INIT SAFE
 // =======================
 const initDB = async () => {
   try {
     await db.sequelize.authenticate();
     console.log("✅ DB connectée avec succès");
 
-    // SAFE MODE (évite destruction tables)
     await db.sequelize.sync({ alter: false });
 
     console.log("✅ Tables OK");
+
   } catch (err) {
     console.error("❌ Erreur DB init :", err.message);
   }
@@ -47,18 +45,14 @@ const initDB = async () => {
 initDB();
 
 // =======================
-// ROUTES PRINCIPALES
+// ROUTES
 // =======================
 app.use("/api/lumen", lumenRoutes);
-
-// IMPORTANT : simulation SOLARMAN sous lumen
 app.use("/api/lumen/solarman", solarmanMock);
 
 // =======================
-// SIMULATION SYSTÈME SOLAIRE
+// SIMULATION SOLAIRE
 // =======================
-
-// données temps réel
 app.get("/api/lumen/donnees-solaire", (req, res) => {
   res.json({
     tension: Math.round(220 + Math.random() * 20),
@@ -68,21 +62,79 @@ app.get("/api/lumen/donnees-solaire", (req, res) => {
   });
 });
 
-// historique
 app.get("/api/lumen/historique", (req, res) => {
-  const data = [];
 
-  for (let i = 0; i < 20; i++) {
-    data.push({
-      id: i,
-      timestamp: new Date(Date.now() - i * 60000),
-      tension: Math.round(220 + Math.random() * 20),
-      courant: Math.round((4 + Math.random() * 2) * 10) / 10,
-      puissance: Math.round(900 + Math.random() * 600),
-    });
-  }
+  const data = Array.from({ length: 20 }).map((_, i) => ({
+    id: i,
+    timestamp: new Date(Date.now() - i * 60000),
+    tension: Math.round(220 + Math.random() * 20),
+    courant: Math.round((4 + Math.random() * 2) * 10) / 10,
+    puissance: Math.round(900 + Math.random() * 600),
+  }));
 
   res.json(data);
+});
+
+// =======================
+// RAPPORTS
+// =======================
+app.get("/api/lumen/rapports/:id", (req, res) => {
+
+  const { id } = req.params;
+
+  res.json({
+    id,
+    name: "Site " + id,
+
+    labels: ["J1", "J2", "J3", "J4", "J5"],
+
+    production: [120, 140, 160, 150, 180],
+    consumption: [100, 110, 130, 120, 140],
+    battery: [80, 85, 90, 88, 95],
+  });
+});
+
+// =======================
+// TEST DEVICE LOCAL IP
+// =======================
+app.post("/api/lumen/test-device", async (req, res) => {
+
+  try {
+
+    const { ipAddress, port, protocol } = req.body;
+
+    if (!ipAddress) {
+      return res.status(400).json({
+        success: false,
+        error: "IP address requis"
+      });
+    }
+
+    const url = `${protocol || "http"}://${ipAddress}:${port || 80}`;
+
+    console.log("🔍 Test device:", url);
+
+    const response = await axios.get(url, {
+      timeout: 5000,
+    });
+
+    return res.json({
+      success: true,
+      online: true,
+      status: response.status,
+      device: response.data,
+    });
+
+  } catch (err) {
+
+    return res.status(500).json({
+      success: false,
+      online: false,
+      error: err.message,
+    });
+
+  }
+
 });
 
 // =======================
@@ -97,72 +149,4 @@ app.get("/", (req, res) => {
 // =======================
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
-});
-
-
-
-
-app.get("/api/lumen/rapports/:id", (req, res) => {
-  const id = req.params.id;
-
-  res.json({
-    id,
-    name: "Site " + id,
-
-    labels: ["J1", "J2", "J3", "J4", "J5"],
-
-    production: [
-      120, 140, 160, 150, 180
-    ],
-
-    consumption: [
-      100, 110, 130, 120, 140
-    ],
-
-    battery: [
-      80, 85, 90, 88, 95
-    ],
-  });
-});
-
-
-const axios = require("axios");
-
-app.post("/api/lumen/test-device", async (req, res) => {
-
-  try {
-
-    const {
-      ipAddress,
-      port,
-      protocol,
-    } = req.body;
-
-    const url = `${protocol}://${ipAddress}:${port}`;
-
-    console.log("🔍 Test device:", url);
-
-    const response = await axios.get(url, {
-      timeout: 5000,
-    });
-
-    res.json({
-      success: true,
-      online: true,
-      status: response.status,
-      device: response.data,
-    });
-
-  } catch (err) {
-
-    console.error(err.message);
-
-    res.status(500).json({
-      success: false,
-      online: false,
-      error: err.message,
-    });
-
-  }
-
 });
