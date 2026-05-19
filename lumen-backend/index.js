@@ -2,11 +2,10 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+const multer = require("multer");
 
 const db = require("./models");
-
-const lumenRoutes = require("./routes/lumen.routes");
-const solarmanMock = require("./routes/solarman.mock");
 
 const app = express();
 const PORT = process.env.PORT || 9000;
@@ -16,6 +15,7 @@ const PORT = process.env.PORT || 9000;
 // =======================
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 
 app.use((req, res, next) => {
   console.log("➡️", req.method, req.url);
@@ -23,65 +23,101 @@ app.use((req, res, next) => {
 });
 
 // =======================
-// DATABASE INIT SAFE
+// MULTER (UPLOAD IMAGE)
+// =======================
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
+// =======================
+// DB INIT
 // =======================
 const initDB = async () => {
   try {
     await db.sequelize.authenticate();
-    console.log("✅ DB connectée avec succès");
-
     await db.sequelize.sync({ alter: false });
-
-    console.log("✅ Tables OK");
-
+    console.log("✅ DB READY");
   } catch (err) {
-    console.error("❌ Erreur DB init :", err.message);
+    console.error("❌ DB ERROR:", err.message);
   }
 };
 
 initDB();
 
 // =======================
-// ROUTES
+// PROJETS
 // =======================
-app.use("/api/lumen", lumenRoutes);
-app.use("/api/lumen/solarman", solarmanMock);
+
+// GET ALL
+app.get("/api/lumen/projets", async (req, res) => {
+  try {
+    const projets = await db.Projet.findAll();
+    res.json(projets);
+  } catch (err) {
+    res.status(500).json({ message: "Erreur projets" });
+  }
+});
+
+// CREATE PROJET + IMAGE
+app.post("/api/lumen/projets", upload.single("image"), async (req, res) => {
+  try {
+    const {
+      nom,
+      ipAddress,
+      port,
+      protocol,
+      serialNumber,
+      devicePassword,
+    } = req.body;
+
+    const image = req.file ? `/uploads/${req.file.filename}` : null;
+
+    const projet = await db.Projet.create({
+      nom,
+      ipAddress,
+      port,
+      protocol,
+      serialNumber,
+      devicePassword,
+      image,
+      status: "active",
+    });
+
+    res.json(projet);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // =======================
-// SIMULATION SOLAIRE
+// SIMULATION CENTRALE LIVE (IP FUTURE)
 // =======================
-app.get("/api/lumen/donnees-solaire", (req, res) => {
+app.get("/api/lumen/device/live/:ip", (req, res) => {
+  const { ip } = req.params;
+
   res.json({
-    tension: Math.round(220 + Math.random() * 20),
-    courant: Math.round((4 + Math.random() * 3) * 10) / 10,
-    puissance: Math.round(1000 + Math.random() * 500),
-    timestamp: new Date(),
+    ip,
+    voltage: 220 + Math.random() * 10,
+    current: 4 + Math.random() * 2,
+    power: 900 + Math.random() * 500,
+    status: "online",
+    time: new Date(),
   });
 });
 
-app.get("/api/lumen/historique", (req, res) => {
-
-  const data = Array.from({ length: 20 }).map((_, i) => ({
-    id: i,
-    timestamp: new Date(Date.now() - i * 60000),
-    tension: Math.round(220 + Math.random() * 20),
-    courant: Math.round((4 + Math.random() * 2) * 10) / 10,
-    puissance: Math.round(900 + Math.random() * 600),
-  }));
-
-  res.json(data);
-});
-
 // =======================
-// RAPPORTS
+// RAPPORT
 // =======================
 app.get("/api/lumen/rapports/:id", (req, res) => {
-  const { id } = req.params;
-
   res.json({
-    id,
-    name: "Site " + id,
-    labels: ["J1", "J2", "J3", "J4", "J5"],
+    id: req.params.id,
+    name: "Centrale " + req.params.id,
     production: [120, 140, 160, 150, 180],
     consumption: [100, 110, 130, 120, 140],
     battery: [80, 85, 90, 88, 95],
@@ -89,67 +125,29 @@ app.get("/api/lumen/rapports/:id", (req, res) => {
 });
 
 // =======================
-// TEST DEVICE (VERSION CORRIGÉE)
-// =======================
-app.post("/api/lumen/test-device", (req, res) => {
-
-  const { ipAddress, port, protocol } = req.body;
-
-  if (!ipAddress) {
-    return res.status(400).json({
-      success: false,
-      error: "IP address requis"
-    });
-  }
-
-  const url = `${protocol || "http"}://${ipAddress}:${port || 80}`;
-
-  console.log("🔍 Test device:", url);
-
-  // ==========================
-  // 🔥 MODE SIMULATION INTELLIGENT
-  // ==========================
-
-  const isLocalIP =
-    ipAddress.startsWith("192.") ||
-    ipAddress.startsWith("10.") ||
-    ipAddress.startsWith("172.") ||
-    ipAddress === "localhost";
-
-  if (isLocalIP) {
-    return res.json({
-      success: true,
-      online: true,
-      mode: "SIMULATION_LOCAL",
-      device: {
-        ip: ipAddress,
-        status: "ONLINE (SIMULÉ)",
-        power: Math.round(800 + Math.random() * 700),
-      }
-    });
-  }
-
-  // ==========================
-  // CAS RÉEL (optionnel)
-  // ==========================
-  return res.json({
-    success: true,
-    online: false,
-    mode: "UNREACHABLE_EXTERNAL",
-    message: "Device non accessible depuis serveur"
-  });
-});
-
-// =======================
-// HEALTH CHECK
-// =======================
 app.get("/", (req, res) => {
-  res.json({ status: "API Lumen running" });
+  res.json({ status: "Lumen API OK" });
 });
 
-// =======================
-// START SERVER
 // =======================
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log("🚀 Server running on", PORT);
+});
+
+
+
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+  destination: "uploads/",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  }
+});
+
+const upload = multer({ storage });
+
+app.post("/api/lumen/projets", upload.single("image"), (req, res) => {
+  console.log(req.file);
+  res.json({ ok: true });
 });
