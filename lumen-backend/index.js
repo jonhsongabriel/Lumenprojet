@@ -124,3 +124,45 @@ app.get("/api/lumen/rapports/:id", (req, res) => {
     ],
   });
 });
+
+
+const axios = require("axios");
+
+app.post("/api/lumen/test-device", async (req, res) => {
+
+  try {
+
+    const {
+      ipAddress,
+      port,
+      protocol,
+    } = req.body;
+
+    const url = `${protocol}://${ipAddress}:${port}`;
+
+    console.log("🔍 Test device:", url);
+
+    const response = await axios.get(url, {
+      timeout: 5000,
+    });
+
+    res.json({
+      success: true,
+      online: true,
+      status: response.status,
+      device: response.data,
+    });
+
+  } catch (err) {
+
+    console.error(err.message);
+
+    res.status(500).json({
+      success: false,
+      online: false,
+      error: err.message,
+    });
+
+  }
+
+});
