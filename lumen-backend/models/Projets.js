@@ -8,18 +8,12 @@ module.exports = (sequelize, DataTypes) => {
     },
 
     nom: DataTypes.STRING,
-    description: DataTypes.TEXT,
-    client: DataTypes.STRING,
-
     ipAddress: DataTypes.STRING,
     port: DataTypes.STRING,
     protocol: DataTypes.STRING,
-
     serialNumber: DataTypes.STRING,
     devicePassword: DataTypes.STRING,
-
     image: DataTypes.STRING,
-
     status: DataTypes.STRING,
 
   }, {

@@ -69,40 +69,29 @@ app.post("/api/lumen/projets", upload.single("image"), async (req, res) => {
     console.log("BODY:", req.body);
     console.log("FILE:", req.file);
 
-    const {
-      nom,
-      ipAddress,
-      port,
-      protocol,
-      serialNumber,
-      devicePassword,
-    } = req.body;
-
-    if (!nom || !ipAddress) {
-      return res.status(400).json({
-        message: "nom et ipAddress obligatoires"
-      });
-    }
-
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
-
-    const projet = await db.Projet.create({
-      nom,
-      ipAddress,
-      port: port || null,
-      protocol: protocol || "http",
-      serialNumber: serialNumber || null,
-      devicePassword: devicePassword || null,
-      image,
+    const projetData = {
+      nom: req.body.nom || "Sans nom",
+      ipAddress: req.body.ipAddress || null,
+      port: req.body.port || null,
+      protocol: req.body.protocol || "http",
+      serialNumber: req.body.serialNumber || null,
+      devicePassword: req.body.devicePassword || null,
+      image: req.file ? `/uploads/${req.file.filename}` : null,
       status: "active",
-    });
+    };
 
-    return res.json(projet);
+    const projet = await db.Projet.create(projetData);
+
+    return res.json({
+      success: true,
+      projet
+    });
 
   } catch (err) {
     console.error("❌ CREATE PROJET ERROR:", err);
 
     return res.status(500).json({
+      success: false,
       message: err.message
     });
   }
