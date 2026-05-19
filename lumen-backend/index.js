@@ -4,18 +4,28 @@ const express = require("express");
 const cors = require("cors");
 
 const db = require("./models");
+
 const lumenRoutes = require("./routes/lumen.routes");
 const solarmanMock = require("./routes/solarman.mock");
 
 const app = express();
 
-const PORT = process.env.PORT || 5000;
+// =======================
+// CONFIG
+// =======================
+const PORT = process.env.PORT || 9000;
 
 // =======================
 // MIDDLEWARES
 // =======================
 app.use(cors());
 app.use(express.json());
+
+// LOG REQUEST (debug utile)
+app.use((req, res, next) => {
+  console.log("➡️", req.method, req.url);
+  next();
+});
 
 // =======================
 // DATABASE INIT
@@ -25,21 +35,55 @@ const initDB = async () => {
     await db.sequelize.authenticate();
     console.log("✅ DB connectée avec succès");
 
-    await db.sequelize.sync({ alter: true });
-    console.log("✅ Tables synchronisées");
+    // SAFE MODE (évite destruction tables)
+    await db.sequelize.sync({ alter: false });
 
+    console.log("✅ Tables OK");
   } catch (err) {
-    console.error("❌ Erreur DB init :", err);
+    console.error("❌ Erreur DB init :", err.message);
   }
 };
 
 initDB();
 
 // =======================
-// ROUTES
+// ROUTES PRINCIPALES
 // =======================
 app.use("/api/lumen", lumenRoutes);
-app.use("/api/solarman", solarmanMock);
+
+// IMPORTANT : simulation SOLARMAN sous lumen
+app.use("/api/lumen/solarman", solarmanMock);
+
+// =======================
+// SIMULATION SYSTÈME SOLAIRE
+// =======================
+
+// données temps réel
+app.get("/api/lumen/donnees-solaire", (req, res) => {
+  res.json({
+    tension: Math.round(220 + Math.random() * 20),
+    courant: Math.round((4 + Math.random() * 3) * 10) / 10,
+    puissance: Math.round(1000 + Math.random() * 500),
+    timestamp: new Date(),
+  });
+});
+
+// historique
+app.get("/api/lumen/historique", (req, res) => {
+  const data = [];
+
+  for (let i = 0; i < 20; i++) {
+    data.push({
+      id: i,
+      timestamp: new Date(Date.now() - i * 60000),
+      tension: Math.round(220 + Math.random() * 20),
+      courant: Math.round((4 + Math.random() * 2) * 10) / 10,
+      puissance: Math.round(900 + Math.random() * 600),
+    });
+  }
+
+  res.json(data);
+});
 
 // =======================
 // HEALTH CHECK
