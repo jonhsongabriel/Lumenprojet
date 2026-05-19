@@ -8,6 +8,5 @@ db.sequelize = sequelize;
 
 // IMPORTANT
 db.Projet = require("./Projets")(sequelize, Sequelize.DataTypes);
-db.Projet = require("./projet.model")(sequelize, Sequelize);
 
 module.exports = db;
