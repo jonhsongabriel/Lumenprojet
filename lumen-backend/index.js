@@ -89,10 +89,10 @@ app.post("/api/lumen/projets", upload.single("image"), async (req, res) => {
     const projet = await db.Projet.create({
       nom,
       ipAddress,
-      port,
-      protocol,
-      serialNumber,
-      devicePassword,
+      port: port || null,
+      protocol: protocol || "http",
+      serialNumber: serialNumber || null,
+      devicePassword: devicePassword || null,
       image,
       status: "active",
     });
@@ -100,7 +100,8 @@ app.post("/api/lumen/projets", upload.single("image"), async (req, res) => {
     return res.json(projet);
 
   } catch (err) {
-    console.error("CREATE PROJET ERROR:", err);
+    console.error("❌ CREATE PROJET ERROR:", err);
+
     return res.status(500).json({
       message: err.message
     });
