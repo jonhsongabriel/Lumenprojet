@@ -98,3 +98,29 @@ app.get("/", (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
+
+
+
+app.get("/api/lumen/rapports/:id", (req, res) => {
+  const id = req.params.id;
+
+  res.json({
+    id,
+    name: "Site " + id,
+
+    labels: ["J1", "J2", "J3", "J4", "J5"],
+
+    production: [
+      120, 140, 160, 150, 180
+    ],
+
+    consumption: [
+      100, 110, 130, 120, 140
+    ],
+
+    battery: [
+      80, 85, 90, 88, 95
+    ],
+  });
+});
