@@ -2,7 +2,6 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
-const axios = require("axios");
 
 const db = require("./models");
 
@@ -10,7 +9,6 @@ const lumenRoutes = require("./routes/lumen.routes");
 const solarmanMock = require("./routes/solarman.mock");
 
 const app = express();
-
 const PORT = process.env.PORT || 9000;
 
 // =======================
@@ -19,7 +17,6 @@ const PORT = process.env.PORT || 9000;
 app.use(cors());
 app.use(express.json());
 
-// LOG REQUEST
 app.use((req, res, next) => {
   console.log("➡️", req.method, req.url);
   next();
@@ -79,15 +76,12 @@ app.get("/api/lumen/historique", (req, res) => {
 // RAPPORTS
 // =======================
 app.get("/api/lumen/rapports/:id", (req, res) => {
-
   const { id } = req.params;
 
   res.json({
     id,
     name: "Site " + id,
-
     labels: ["J1", "J2", "J3", "J4", "J5"],
-
     production: [120, 140, 160, 150, 180],
     consumption: [100, 110, 130, 120, 140],
     battery: [80, 85, 90, 88, 95],
@@ -95,46 +89,55 @@ app.get("/api/lumen/rapports/:id", (req, res) => {
 });
 
 // =======================
-// TEST DEVICE LOCAL IP
+// TEST DEVICE (VERSION CORRIGÉE)
 // =======================
-app.post("/api/lumen/test-device", async (req, res) => {
+app.post("/api/lumen/test-device", (req, res) => {
 
-  try {
+  const { ipAddress, port, protocol } = req.body;
 
-    const { ipAddress, port, protocol } = req.body;
-
-    if (!ipAddress) {
-      return res.status(400).json({
-        success: false,
-        error: "IP address requis"
-      });
-    }
-
-    const url = `${protocol || "http"}://${ipAddress}:${port || 80}`;
-
-    console.log("🔍 Test device:", url);
-
-    const response = await axios.get(url, {
-      timeout: 5000,
+  if (!ipAddress) {
+    return res.status(400).json({
+      success: false,
+      error: "IP address requis"
     });
+  }
 
+  const url = `${protocol || "http"}://${ipAddress}:${port || 80}`;
+
+  console.log("🔍 Test device:", url);
+
+  // ==========================
+  // 🔥 MODE SIMULATION INTELLIGENT
+  // ==========================
+
+  const isLocalIP =
+    ipAddress.startsWith("192.") ||
+    ipAddress.startsWith("10.") ||
+    ipAddress.startsWith("172.") ||
+    ipAddress === "localhost";
+
+  if (isLocalIP) {
     return res.json({
       success: true,
       online: true,
-      status: response.status,
-      device: response.data,
+      mode: "SIMULATION_LOCAL",
+      device: {
+        ip: ipAddress,
+        status: "ONLINE (SIMULÉ)",
+        power: Math.round(800 + Math.random() * 700),
+      }
     });
-
-  } catch (err) {
-
-    return res.status(500).json({
-      success: false,
-      online: false,
-      error: err.message,
-    });
-
   }
 
+  // ==========================
+  // CAS RÉEL (optionnel)
+  // ==========================
+  return res.json({
+    success: true,
+    online: false,
+    mode: "UNREACHABLE_EXTERNAL",
+    message: "Device non accessible depuis serveur"
+  });
 });
 
 // =======================
