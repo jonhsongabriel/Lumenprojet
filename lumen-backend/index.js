@@ -23,19 +23,19 @@ app.use((req, res, next) => {
 });
 
 // =======================
-// MULTER (UPLOAD IMAGE)
+// MULTER CONFIG (ONCE ONLY)
 // =======================
 const storage = multer.diskStorage({
   destination: "uploads/",
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+    cb(null, Date.now() + "-" + file.originalname);
   },
 });
 
 const upload = multer({ storage });
 
 // =======================
-// DB INIT
+// DATABASE INIT
 // =======================
 const initDB = async () => {
   try {
@@ -53,7 +53,7 @@ initDB();
 // PROJETS
 // =======================
 
-// GET ALL
+// GET ALL PROJETS
 app.get("/api/lumen/projets", async (req, res) => {
   try {
     const projets = await db.Projet.findAll();
@@ -89,14 +89,13 @@ app.post("/api/lumen/projets", upload.single("image"), async (req, res) => {
     });
 
     res.json(projet);
-
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
 // =======================
-// SIMULATION CENTRALE LIVE (IP FUTURE)
+// SIMULATION DEVICE LIVE
 // =======================
 app.get("/api/lumen/device/live/:ip", (req, res) => {
   const { ip } = req.params;
@@ -125,29 +124,15 @@ app.get("/api/lumen/rapports/:id", (req, res) => {
 });
 
 // =======================
+// HEALTH CHECK
+// =======================
 app.get("/", (req, res) => {
   res.json({ status: "Lumen API OK" });
 });
 
 // =======================
+// START SERVER
+// =======================
 app.listen(PORT, "0.0.0.0", () => {
   console.log("🚀 Server running on", PORT);
-});
-
-
-
-const multer = require("multer");
-
-const storage = multer.diskStorage({
-  destination: "uploads/",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  }
-});
-
-const upload = multer({ storage });
-
-app.post("/api/lumen/projets", upload.single("image"), (req, res) => {
-  console.log(req.file);
-  res.json({ ok: true });
 });
