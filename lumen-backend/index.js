@@ -66,6 +66,9 @@ app.get("/api/lumen/projets", async (req, res) => {
 // CREATE PROJET + IMAGE
 app.post("/api/lumen/projets", upload.single("image"), async (req, res) => {
   try {
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+
     const {
       nom,
       ipAddress,
@@ -74,6 +77,12 @@ app.post("/api/lumen/projets", upload.single("image"), async (req, res) => {
       serialNumber,
       devicePassword,
     } = req.body;
+
+    if (!nom || !ipAddress) {
+      return res.status(400).json({
+        message: "nom et ipAddress obligatoires"
+      });
+    }
 
     const image = req.file ? `/uploads/${req.file.filename}` : null;
 
@@ -88,9 +97,13 @@ app.post("/api/lumen/projets", upload.single("image"), async (req, res) => {
       status: "active",
     });
 
-    res.json(projet);
+    return res.json(projet);
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("CREATE PROJET ERROR:", err);
+    return res.status(500).json({
+      message: err.message
+    });
   }
 });
 
