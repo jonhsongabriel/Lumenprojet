@@ -134,7 +134,18 @@ function MainLayout({ children }) {
             <hr className="text-secondary" />
 
             <li className="small text-muted px-2">
-              📊 Rapports disponibles
+              <Link
+                onClick={() => setOpen(false)}
+                className={`d-block py-2 px-2 rounded ${
+                  isActive("/rapport")
+                    ? "bg-warning text-dark"
+                    : "text-white"
+                }`}
+                to="/journal"
+              >
+                📜 <span className="ms-2">📊 Rapports disponibles</span>
+              </Link>
+              
             </li>
 
           </ul>
