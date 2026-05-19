@@ -100,17 +100,17 @@ app.post("/api/lumen/projets", upload.single("image"), async (req, res) => {
 // =======================
 // SIMULATION DEVICE LIVE
 // =======================
-app.get("/api/lumen/device/live/:ip", (req, res) => {
-  const { ip } = req.params;
-
-  res.json({
-    ip,
-    voltage: 220 + Math.random() * 10,
-    current: 4 + Math.random() * 2,
-    power: 900 + Math.random() * 500,
-    status: "online",
-    time: new Date(),
-  });
+app.get("/api/lumen/projets", async (req, res) => {
+  try {
+    const projets = await db.Projet.findAll();
+    res.json(projets);
+  } catch (err) {
+    console.error("❌ PROJETS ERROR:", err); // 👈 IMPORTANT
+    res.status(500).json({
+      message: "Erreur projets",
+      error: err.message, // 👈 IMPORTANT
+    });
+  }
 });
 
 // =======================
