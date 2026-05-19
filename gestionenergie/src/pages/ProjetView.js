@@ -10,7 +10,7 @@ function ProjetView() {
   useEffect(() => {
 
     const fetchLive = async () => {
-      const res = await fetch(`${API_URL}/api/lumen/centrale/${id}/live`);
+      const res = await fetch(`${API_URL}/centrale/${id}/live`);
       const json = await res.json();
       setData(json);
     };

@@ -59,7 +59,7 @@ export default function ConnecterMoniteur() {
         formData.append("image", form.image);
       }
 
-      const res = await fetch(`${API_URL}/api/lumen/projets`, {
+      const res = await fetch(`${API_URL}/projets`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
